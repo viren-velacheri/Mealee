@@ -106,6 +106,8 @@ One line per non-obvious choice: what was chosen over what, and why.
   ingredients: each searched ingredient has its own grams and nutrient contribution before Confirm.
 - Custom avatars accept any single emoji rather than uploading images: player, fight, league, and
   arena payloads already render an emoji everywhere, so this expands choice without adding media storage.
+- Database sessions are request-scoped FastAPI dependencies: every HTTP response closes its SQLAlchemy
+  session, preventing normal phone refreshes from exhausting the connection pool over time.
 - The fight is staged like a creature battle rather than two stat cards: the opponent
   sits high and small, you sit low and large, and depth is faked with scale and offset
   alone. It reads as one scene, which two glass panels never did.

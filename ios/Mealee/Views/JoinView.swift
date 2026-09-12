@@ -58,25 +58,7 @@ struct JoinView: View {
             TextField("Display name", text: $form.name).font(TypeScale.title)
                 .textInputAutocapitalization(.words).foregroundStyle(Palette.ink).submitLabel(.done)
             FieldLabel(text: "Your face")
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(emojiChoices, id: \.self) { choice in
-                        Text(choice).font(.system(size: 34)).padding(8)
-                            .background(choice == emoji ? Palette.leaf.opacity(0.5) : .clear, in: Circle())
-                            .scaleEffect(choice == emoji ? 1.15 : 1)
-                            .onTapGesture { Haptics.tap(); withAnimation(Motion.bounce) { emoji = choice } }
-                    }
-                    Button { showingCustomEmoji = true } label: {
-                        VStack(spacing: 2) {
-                            Text(emojiChoices.contains(emoji) ? "+" : emoji).font(.system(size: 30, weight: .medium))
-                            Text("custom").font(.system(size: 9, weight: .semibold, design: .rounded))
-                        }
-                        .foregroundStyle(Palette.ink).frame(width: 50, height: 50)
-                        .background(emojiChoices.contains(emoji) ? .clear : Palette.leaf.opacity(0.5), in: Circle())
-                    }
-                    .accessibilityLabel("Choose a custom emoji")
-                }
-            }
+            AvatarPicker(emoji: $emoji, choices: emojiChoices, showingCustomEmoji: $showingCustomEmoji)
             Notice(kind: .guidance, text: "\(emoji) is picked. Tap another to change it.")
         }
         .glassCard()

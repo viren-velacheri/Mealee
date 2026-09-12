@@ -40,6 +40,34 @@ struct BusyOverlay: View {
     }
 }
 
+struct AvatarPicker: View {
+    @Binding var emoji: String
+    let choices: [String]
+    @Binding var showingCustomEmoji: Bool
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(choices, id: \.self) { choice in
+                    Text(choice).font(.system(size: 34)).padding(8)
+                        .background(choice == emoji ? Palette.leaf.opacity(0.5) : .clear, in: Circle())
+                        .scaleEffect(choice == emoji ? 1.15 : 1)
+                        .onTapGesture { Haptics.tap(); withAnimation(Motion.bounce) { emoji = choice } }
+                }
+                Button { showingCustomEmoji = true } label: {
+                    VStack(spacing: 2) {
+                        Text(choices.contains(emoji) ? "+" : emoji).font(.system(size: 30, weight: .medium))
+                        Text("custom").font(.system(size: 9, weight: .semibold, design: .rounded))
+                    }
+                    .foregroundStyle(Palette.ink).frame(width: 50, height: 50)
+                    .background(choices.contains(emoji) ? .clear : Palette.leaf.opacity(0.5), in: Circle())
+                }
+                .accessibilityLabel("Choose a custom emoji")
+            }
+        }
+    }
+}
+
 enum AvatarChoice {
     static func emoji(from input: String) -> String? {
         guard let character = input.trimmingCharacters(in: .whitespacesAndNewlines).first else { return nil }
