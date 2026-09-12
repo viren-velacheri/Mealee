@@ -1,0 +1,53 @@
+# XcodeGen spec. Generate the project with:   brew install xcodegen && cd ios && xcodegen generate
+# Mealee.xcodeproj is a build product of this file and is not committed.
+name: Mealee
+options:
+  bundleIdPrefix: edu.cmu.hackcmu
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+configFiles:
+  Debug: Config.xcconfig
+  Release: Config.xcconfig
+packages:
+  Auth0:
+    url: https://github.com/auth0/Auth0.swift
+    from: 2.22.0
+targets:
+  Mealee:
+    type: application
+    platform: iOS
+    sources:
+      - path: Mealee
+        excludes: ["Resources/Auth0.plist.example"]
+    dependencies:
+      - package: Auth0
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: edu.cmu.hackcmu.mealee
+        SWIFT_VERSION: "5.10"
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: $(DEVELOPMENT_TEAM)
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+    info:
+      path: Mealee/Info.plist
+      properties:
+        CFBundleDisplayName: Mealee
+        NSCameraUsageDescription: Mealee photographs your plate to measure your meal.
+        NSPhotoLibraryUsageDescription: Pick a plate photo if the camera is unavailable.
+        API_BASE_URL: $(API_BASE_URL)
+        AUTH0_ENABLED: $(AUTH0_ENABLED)
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+  MealeeTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: MealeeTests
+      - path: Mealee/Fixtures
+        buildPhase: resources
+    dependencies:
+      - target: Mealee

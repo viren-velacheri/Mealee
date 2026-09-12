@@ -1,0 +1,202 @@
+{
+  "meal_id": "a95d611d-b9fc-453f-abbf-464fd5cb416d",
+  "image_w": 1200,
+  "image_h": 900,
+  "image_url": "/uploads/a95d611d-b9fc-453f-abbf-464fd5cb416d.jpg",
+  "items": [
+    {
+      "item_id": "8d1b37b4-c2fd-4e09-bf64-7e3f017a1678",
+      "label": "pizza slice",
+      "fdc_id": 170035,
+      "grams": 54.5,
+      "grams_low": 38.2,
+      "grams_high": 70.9,
+      "confidence": 0.87,
+      "polygon": [
+        [
+          620,
+          210
+        ],
+        [
+          300,
+          250
+        ],
+        [
+          330,
+          500
+        ],
+        [
+          560,
+          560
+        ],
+        [
+          700,
+          470
+        ]
+      ],
+      "is_new": true
+    },
+    {
+      "item_id": "0521f583-373c-461b-abbd-ce3043c04fa3",
+      "label": "broccoli",
+      "fdc_id": 170379,
+      "grams": 35.5,
+      "grams_low": 24.9,
+      "grams_high": 46.2,
+      "confidence": 0.74,
+      "polygon": [
+        [
+          836,
+          221
+        ],
+        [
+          810,
+          243
+        ],
+        [
+          792,
+          279
+        ],
+        [
+          794,
+          328
+        ],
+        [
+          822,
+          370
+        ],
+        [
+          795,
+          379
+        ],
+        [
+          769,
+          405
+        ],
+        [
+          760,
+          432
+        ],
+        [
+          769,
+          475
+        ],
+        [
+          795,
+          501
+        ],
+        [
+          822,
+          510
+        ],
+        [
+          865,
+          501
+        ],
+        [
+          895,
+          467
+        ],
+        [
+          919,
+          489
+        ],
+        [
+          945,
+          499
+        ],
+        [
+          975,
+          499
+        ],
+        [
+          1001,
+          489
+        ],
+        [
+          1022,
+          471
+        ],
+        [
+          1035,
+          449
+        ],
+        [
+          1039,
+          405
+        ],
+        [
+          1029,
+          379
+        ],
+        [
+          1011,
+          358
+        ],
+        [
+          989,
+          345
+        ],
+        [
+          961,
+          339
+        ],
+        [
+          970,
+          291
+        ],
+        [
+          959,
+          256
+        ],
+        [
+          937,
+          230
+        ],
+        [
+          901,
+          212
+        ],
+        [
+          871,
+          210
+        ]
+      ],
+      "is_new": false
+    }
+  ],
+  "scale": {
+    "type": "card",
+    "px_per_mm": 4.159
+  },
+  "day_totals": {
+    "kcal": 877.1,
+    "protein_g": 73.0,
+    "fiber_g": 6.1,
+    "veg_g": 153.3,
+    "added_sugar_g": 0.5,
+    "caffeine_mg": 0.0,
+    "water_ml": 1250.0,
+    "sodium_mg": 628.6
+  },
+  "fighter": {
+    "attack": 78.7,
+    "defense": 29.7,
+    "stamina": 43.4,
+    "speed": 50.4,
+    "focus": 70.0,
+    "recovery": 4.77,
+    "crash_turn": null,
+    "hp_max": 143,
+    "first_strike": false,
+    "reasons": [
+      "Protein 73 g: attack 78",
+      "Vegetables 153 g, fiber 6 g: defense 31",
+      "877 kcal of 2000: stamina 44, HP 144",
+      "Added sugar 1 g: speed 51",
+      "Caffeine 0 mg: focus 70",
+      "Water 1250 ml, sodium 629 mg: recovers 5.0 HP a turn",
+      "Includes 20% carry-over from yesterday"
+    ]
+  }
+}

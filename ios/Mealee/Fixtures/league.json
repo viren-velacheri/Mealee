@@ -1,0 +1,133 @@
+{
+  "code": "DEMO",
+  "name": "HackCMU Demo",
+  "week_start": "2026-09-07",
+  "players": [
+    {
+      "player_id": "dea609e1-264c-40e5-8c48-cb1dbf96ed9b",
+      "name": "Protein Pete",
+      "emoji": "\ud83c\udf57",
+      "discovered": 5,
+      "fighter": {
+        "attack": 78.7,
+        "defense": 29.7,
+        "stamina": 43.4,
+        "speed": 50.4,
+        "focus": 70.0,
+        "recovery": 4.77,
+        "crash_turn": null,
+        "hp_max": 143,
+        "first_strike": false,
+        "reasons": [
+          "Protein 73 g: attack 78",
+          "Vegetables 153 g, fiber 6 g: defense 31",
+          "877 kcal of 2000: stamina 44, HP 144",
+          "Added sugar 1 g: speed 51",
+          "Caffeine 0 mg: focus 70",
+          "Water 1250 ml, sodium 629 mg: recovers 5.0 HP a turn",
+          "Includes 20% carry-over from yesterday"
+        ]
+      }
+    },
+    {
+      "player_id": "9fb0b648-cc52-4032-90e6-eef39c7b5eca",
+      "name": "Donut Dana",
+      "emoji": "\ud83c\udf69",
+      "discovered": 5,
+      "fighter": {
+        "attack": 33.6,
+        "defense": 14.0,
+        "stamina": 73.0,
+        "speed": 100.0,
+        "focus": 85.0,
+        "recovery": 5.29,
+        "crash_turn": 3,
+        "hp_max": 173,
+        "first_strike": true,
+        "reasons": [
+          "Protein 27 g: attack 35",
+          "Vegetables 0 g, fiber 11 g: defense 14",
+          "1511 kcal of 2000: stamina 76, HP 176",
+          "Added sugar 73 g: speed 100, crash on turn 3",
+          "Caffeine 206 mg: focus 85, first strike",
+          "Water 1267 ml, sodium 1399 mg: recovers 5.1 HP a turn",
+          "Includes 20% carry-over from yesterday"
+        ]
+      }
+    },
+    {
+      "player_id": "5ece04c1-a2d9-4791-9385-f8bad990497d",
+      "name": "Broccoli Bo",
+      "emoji": "\ud83e\udd66",
+      "discovered": 5,
+      "fighter": {
+        "attack": 51.6,
+        "defense": 96.8,
+        "stamina": 26.4,
+        "speed": 50.0,
+        "focus": 70.0,
+        "recovery": 4.24,
+        "crash_turn": null,
+        "hp_max": 126,
+        "first_strike": false,
+        "reasons": [
+          "Protein 44 g: attack 52",
+          "Vegetables 536 g, fiber 28 g: defense 98",
+          "536 kcal of 2000: stamina 27, HP 127",
+          "Added sugar 0 g: speed 50",
+          "Caffeine 0 mg: focus 70",
+          "Water 1000 ml, sodium 127 mg: recovers 4.0 HP a turn",
+          "Includes 20% carry-over from yesterday"
+        ]
+      }
+    }
+  ],
+  "standings": [
+    {
+      "player_id": "5ece04c1-a2d9-4791-9385-f8bad990497d",
+      "name": "Broccoli Bo",
+      "emoji": "\ud83e\udd66",
+      "wins": 3,
+      "damage": 686,
+      "rank": 1
+    },
+    {
+      "player_id": "dea609e1-264c-40e5-8c48-cb1dbf96ed9b",
+      "name": "Protein Pete",
+      "emoji": "\ud83c\udf57",
+      "wins": 2,
+      "damage": 470,
+      "rank": 2
+    },
+    {
+      "player_id": "9fb0b648-cc52-4032-90e6-eef39c7b5eca",
+      "name": "Donut Dana",
+      "emoji": "\ud83c\udf69",
+      "wins": 0,
+      "damage": 481,
+      "rank": 3
+    }
+  ],
+  "tonight": [
+    {
+      "a": {
+        "player_id": "dea609e1-264c-40e5-8c48-cb1dbf96ed9b",
+        "name": "Protein Pete",
+        "emoji": "\ud83c\udf57"
+      },
+      "b": {
+        "player_id": "5ece04c1-a2d9-4791-9385-f8bad990497d",
+        "name": "Broccoli Bo",
+        "emoji": "\ud83e\udd66"
+      }
+    },
+    {
+      "a": {
+        "player_id": "9fb0b648-cc52-4032-90e6-eef39c7b5eca",
+        "name": "Donut Dana",
+        "emoji": "\ud83c\udf69"
+      },
+      "b": null
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+// Copy to Config.xcconfig (gitignored) and fill in. Xcode reads these into Info.plist.
+// A double slash starts a comment in xcconfig, so the URL scheme is spelled with $().
+API_BASE_URL = http:/$()/192.168.1.20:8000
+AUTH0_ENABLED = YES
+DEVELOPMENT_TEAM =
