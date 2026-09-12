@@ -35,10 +35,12 @@ def new_league_code(session: Session) -> str:
             return code
 
 
-def day_totals(session: Session, player_id: str, day: date) -> tuple[DayTotals, bool]:
+def day_totals(session: Session, player_id: str, day: date,
+               include_meal_id: str | None = None) -> tuple[DayTotals, bool]:
     totals = DayTotals()
-    meals = session.scalars(select(Meal).where(
-        Meal.player_id == player_id, Meal.status == "confirmed")).all()
+    meals = session.scalars(select(Meal).where(Meal.player_id == player_id)).all()
+    meals = [meal for meal in meals
+             if meal.status == "confirmed" or meal.id == include_meal_id]
     day_meals = [meal for meal in meals if meal.taken_at.date() == day]
     for meal in day_meals:
         for item in session.scalars(select(MealItem).where(MealItem.meal_id == meal.id)):
@@ -66,12 +68,19 @@ def fighter_row(session: Session, player_id: str, day: date) -> Fighter | None:
         Fighter.player_id == player_id, Fighter.day == day)).first()
 
 
-def compute_fighter(session: Session, player_id: str, day: date | None = None) -> Fighter:
-    day = day or today()
-    totals, has_intake = day_totals(session, player_id, day)
+def fighter_stats_for_day(session: Session, player_id: str, day: date,
+                          include_meal_id: str | None = None) -> tuple[DayTotals, FighterStats]:
+    """Calculate stats without persisting them; a draft meal can be included for preview."""
+    totals, has_intake = day_totals(session, player_id, day, include_meal_id)
     stats = fighter_from_totals(totals)
     yesterday = fighter_row(session, player_id, day - timedelta(days=1))
     stats = blend_with_yesterday(stats, _stats_from_row(yesterday) if yesterday else None, has_intake)
+    return totals, stats
+
+
+def compute_fighter(session: Session, player_id: str, day: date | None = None) -> Fighter:
+    day = day or today()
+    _, stats = fighter_stats_for_day(session, player_id, day)
 
     row = fighter_row(session, player_id, day)
     if row is None:
@@ -251,18 +260,23 @@ def league_payload(session: Session, league: League) -> dict:
 
 def record_discoveries(session: Session, player_id: str, labels_with_thumbs: dict[str, str]) -> list[str]:
     start = week_start(today())
-    existing = {row.label for row in session.scalars(select(Discovery).where(
-        Discovery.player_id == player_id, Discovery.week_start == start))}
-    new_labels = []
-    for label, thumbnail_path in labels_with_thumbs.items():
-        if label in existing or label not in food_classes():
-            continue
+    new_labels = undiscovered_labels(session, player_id, labels_with_thumbs)
+    for label in new_labels:
+        thumbnail_path = labels_with_thumbs[label]
         session.add(Discovery(player_id=player_id, label=label, week_start=start,
                               thumbnail_path=thumbnail_path))
         identity.record_discovery(player_id, label, start.isoformat())
-        new_labels.append(label)
     session.commit()
     return new_labels
+
+
+def undiscovered_labels(session: Session, player_id: str, labels) -> list[str]:
+    start = week_start(today())
+    existing = {row.label for row in session.scalars(select(Discovery).where(
+        Discovery.player_id == player_id, Discovery.week_start == start))}
+    return list(dict.fromkeys(
+        label for label in labels if label not in existing and label in food_classes()
+    ))
 
 
 def discoveries_payload(session: Session, player_id: str) -> dict:
@@ -278,8 +292,12 @@ def discoveries_payload(session: Session, player_id: str) -> dict:
 
 def meal_payload(session: Session, meal: Meal, new_labels: list[str] | None = None) -> dict:
     items = session.scalars(select(MealItem).where(MealItem.meal_id == meal.id)).all()
-    fighter = compute_fighter(session, meal.player_id)
-    totals, _ = day_totals(session, meal.player_id, today())
+    if meal.status == "draft":
+        totals, stats = fighter_stats_for_day(session, meal.player_id, today(), meal.id)
+        fighter = stats.as_dict()
+    else:
+        fighter = fighter_payload(compute_fighter(session, meal.player_id))
+        totals, _ = day_totals(session, meal.player_id, today())
     return {
         "meal_id": meal.id,
         "image_w": meal.image_w,
@@ -298,5 +316,5 @@ def meal_payload(session: Session, meal: Meal, new_labels: list[str] | None = No
         } for item in items],
         "scale": {"type": meal.scale_ref_type, "px_per_mm": round(meal.scale_px_per_mm, 3)},
         "day_totals": totals.as_dict(),
-        "fighter": fighter_payload(fighter),
+        "fighter": fighter,
     }

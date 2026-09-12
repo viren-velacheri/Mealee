@@ -11,6 +11,7 @@ final class MockAPI: MealeeAPI {
     private var fights: [String: FightResponse] = [:]
     private var totals: [String: DayTotals] = [:]
     private var discovered: [String: [Discovery]] = [:]
+    private var draftMeals: [String: (playerId: String, meal: MealResponse)] = [:]
     private let eventContinuations = LockedBox<[UUID: AsyncStream<LeagueEvent>.Continuation]>([:])
 
     init() {
@@ -61,34 +62,69 @@ final class MockAPI: MealeeAPI {
 
     func uploadMeal(playerId: String, jpeg: Data) async throws -> MealResponse {
         try? await Task.sleep(for: .milliseconds(1200))
-        fighters[playerId] = mealFixture.fighter
-        totals[playerId] = mealFixture.dayTotals
+        let mealId = "mock-" + UUID().uuidString.lowercased()
         let already = Set((discovered[playerId] ?? []).map(\.label))
         let fresh = mealFixture.items.filter { !already.contains($0.label) }
-        discovered[playerId, default: []] += fresh.map { Discovery(label: $0.label, thumbnailUrl: "plate_fixture.jpg") }
-        broadcast(.fighterUpdate(playerId: playerId, fighter: mealFixture.fighter))
-        return MealResponse(mealId: mealFixture.mealId, imageW: mealFixture.imageW, imageH: mealFixture.imageH,
-                            imageUrl: mealFixture.imageUrl,
-                            items: mealFixture.items.map { item in
-                                MealItem(itemId: item.itemId, label: item.label, fdcId: item.fdcId, grams: item.grams,
+        let items = mealFixture.items.enumerated().map { index, item in
+            MealItem(itemId: "\(mealId)-\(index)", label: item.label, fdcId: item.fdcId, grams: item.grams,
                                          gramsLow: item.gramsLow, gramsHigh: item.gramsHigh, confidence: item.confidence,
-                                         polygon: item.polygon, isNew: fresh.contains { $0.itemId == item.itemId })
-                            },
-                            scale: mealFixture.scale, dayTotals: mealFixture.dayTotals, fighter: mealFixture.fighter)
+                                         polygon: item.polygon, isNew: fresh.contains { $0.label == item.label })
+        }
+        let draft = MealResponse(mealId: mealId, imageW: mealFixture.imageW, imageH: mealFixture.imageH,
+                                 imageUrl: mealFixture.imageUrl, items: items, scale: mealFixture.scale,
+                                 dayTotals: mealFixture.dayTotals, fighter: mealFixture.fighter)
+        draftMeals[mealId] = (playerId, draft)
+        return draft
     }
 
     func relabel(mealId: String, itemId: String, label: String) async throws -> MealResponse {
         await delay()
-        let items = mealFixture.items.map { item in
+        guard let draft = draftMeals[mealId] else {
+            throw APIError(error: "unknown meal", hint: "Scan the meal again.")
+        }
+        let items = draft.meal.items.map { item in
             item.itemId == itemId
                 ? MealItem(itemId: item.itemId, label: label, fdcId: item.fdcId, grams: item.grams * 0.9,
                            gramsLow: item.gramsLow * 0.9, gramsHigh: item.gramsHigh * 0.9, confidence: 1.0,
                            polygon: item.polygon, isNew: false)
                 : item
         }
-        return MealResponse(mealId: mealId, imageW: mealFixture.imageW, imageH: mealFixture.imageH,
-                            imageUrl: mealFixture.imageUrl, items: items, scale: mealFixture.scale,
-                            dayTotals: mealFixture.dayTotals, fighter: mealFixture.fighter)
+        let updated = MealResponse(mealId: mealId, imageW: draft.meal.imageW, imageH: draft.meal.imageH,
+                                   imageUrl: draft.meal.imageUrl, items: items, scale: draft.meal.scale,
+                                   dayTotals: draft.meal.dayTotals, fighter: draft.meal.fighter)
+        draftMeals[mealId] = (draft.playerId, updated)
+        return updated
+    }
+
+    func confirmMeal(mealId: String) async throws -> MealResponse {
+        await delay()
+        guard let draft = draftMeals.removeValue(forKey: mealId) else {
+            throw APIError(error: "unknown meal", hint: "Scan the meal again.")
+        }
+        let already = Set((discovered[draft.playerId] ?? []).map(\.label))
+        let freshLabels = Set(draft.meal.items.map(\.label).filter { !already.contains($0) })
+        let items = draft.meal.items.map { item in
+            MealItem(itemId: item.itemId, label: item.label, fdcId: item.fdcId, grams: item.grams,
+                     gramsLow: item.gramsLow, gramsHigh: item.gramsHigh, confidence: item.confidence,
+                     polygon: item.polygon, isNew: freshLabels.contains(item.label))
+        }
+        let confirmed = MealResponse(mealId: mealId, imageW: draft.meal.imageW, imageH: draft.meal.imageH,
+                                     imageUrl: draft.meal.imageUrl, items: items, scale: draft.meal.scale,
+                                     dayTotals: draft.meal.dayTotals, fighter: draft.meal.fighter)
+        fighters[draft.playerId] = confirmed.fighter
+        totals[draft.playerId] = confirmed.dayTotals
+        discovered[draft.playerId, default: []] += items
+            .filter { freshLabels.contains($0.label) }
+            .map { Discovery(label: $0.label, thumbnailUrl: "plate_fixture.jpg") }
+        broadcast(.fighterUpdate(playerId: draft.playerId, fighter: confirmed.fighter))
+        return confirmed
+    }
+
+    func discardMeal(mealId: String) async throws {
+        await delay()
+        guard draftMeals.removeValue(forKey: mealId) != nil else {
+            throw APIError(error: "unknown meal", hint: "It may already be discarded.")
+        }
     }
 
     func intake(playerId: String, kind: String) async throws -> IntakeResponse {

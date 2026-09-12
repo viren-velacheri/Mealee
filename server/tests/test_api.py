@@ -67,16 +67,36 @@ def test_new_player_has_a_fighter(client, players):
     assert fighter["reasons"]
 
 
-def test_meal_without_scale_reference_is_400(client, players, monkeypatch):
-    monkeypatch.setattr(portions, "segment", lambda image: [])
+def test_meal_without_scale_reference_uses_estimated_scale(client, monkeypatch):
+    league = client.post("/leagues", json={"name": "Bowl Test League"}).json()["code"]
+    player_id = client.post("/players", json={
+        "league_code": league, "name": "Bowl Tester", "emoji": "🥣",
+    }).json()["player_id"]
+    monkeypatch.setattr(portions, "segment", lambda image: _fake_segment(image)[:2])
     monkeypatch.setattr(portions, "find_card_px_per_mm", lambda image: None)
-    response = client.post("/meals", data={"player_id": players[0]},
+    response = client.post("/meals", data={"player_id": player_id},
                            files={"image": ("plate.jpg", _plate_jpeg(), "image/jpeg")})
-    assert response.status_code == 400
-    assert response.json()["hint"] == "place a card or fork on the plate"
+    assert response.status_code == 200, response.text
+    meal = response.json()
+    assert meal["scale"]["type"] == "estimated"
+    assert meal["scale"]["px_per_mm"] == 3.0
+    assert {item["label"] for item in meal["items"]} == {"pizza slice", "broccoli"}
+
+
+def test_cup_detection_is_not_assumed_to_be_coffee(monkeypatch):
+    image = portions.decode_image(_plate_jpeg())
+    cup = np.zeros(image.shape[:2], dtype=bool)
+    cup[200:700, 300:800] = True
+    monkeypatch.setattr(portions, "segment", lambda _: [("cup", 0.9, cup)])
+    monkeypatch.setattr(portions, "find_card_px_per_mm", lambda _: 4.0)
+
+    analysis = portions.analyze(_plate_jpeg())
+
+    assert analysis.regions == []
 
 
 def test_meal_path_end_to_end(client, players, monkeypatch):
+    fighter_before = client.get(f"/fighters/{players[0]}/today").json()
     monkeypatch.setattr(portions, "segment", _fake_segment)
     monkeypatch.setattr(portions, "find_card_px_per_mm", lambda image: None)
     response = client.post("/meals", data={"player_id": players[0]},
@@ -97,9 +117,46 @@ def test_meal_path_end_to_end(client, players, monkeypatch):
     assert any("attack" in reason for reason in meal["fighter"]["reasons"])
     assert {item["label"] for item in meal["items"] if item["is_new"]} == labels
 
+    # Scanning is only a preview. It must not affect the logged fighter or Foodex.
+    assert client.get(f"/fighters/{players[0]}/today").json() == fighter_before
+    assert client.get(f"/players/{players[0]}/discoveries").json()["discovered"] == []
+
+    confirmed_response = client.post(f"/meals/{meal['meal_id']}/confirm")
+    assert confirmed_response.status_code == 200, confirmed_response.text
+    confirmed = confirmed_response.json()
+    assert confirmed["fighter"] == meal["fighter"]
+    assert {item["label"] for item in confirmed["items"] if item["is_new"]} == labels
+
     discoveries = client.get(f"/players/{players[0]}/discoveries").json()
     assert {d["label"] for d in discoveries["discovered"]} == labels
     assert discoveries["total"] == 30
+
+    # Confirm is safe against a repeated tap and does not duplicate discoveries.
+    repeated = client.post(f"/meals/{meal['meal_id']}/confirm")
+    assert repeated.status_code == 200, repeated.text
+    assert not any(item["is_new"] for item in repeated.json()["items"])
+    assert len(client.get(f"/players/{players[0]}/discoveries").json()["discovered"]) == 2
+
+
+def test_cancel_discards_a_scanned_meal(client, monkeypatch):
+    league = client.post("/leagues", json={"name": "Cancel Test League"}).json()["code"]
+    player_id = client.post("/players", json={
+        "league_code": league, "name": "Retake Tester", "emoji": "📷",
+    }).json()["player_id"]
+    fighter_before = client.get(f"/fighters/{player_id}/today").json()
+    monkeypatch.setattr(portions, "segment", _fake_segment)
+    monkeypatch.setattr(portions, "find_card_px_per_mm", lambda image: None)
+
+    meal = client.post("/meals", data={"player_id": player_id},
+                       files={"image": ("plate.jpg", _plate_jpeg(), "image/jpeg")}).json()
+    response = client.delete(f"/meals/{meal['meal_id']}")
+
+    assert response.status_code == 200, response.text
+    assert response.json() == {"ok": True}
+    assert client.get(f"/fighters/{player_id}/today").json() == fighter_before
+    assert client.get(f"/players/{player_id}/discoveries").json()["discovered"] == []
+    assert client.get(meal["image_url"]).status_code == 404
+    assert client.post(f"/meals/{meal['meal_id']}/confirm").status_code == 404
 
 
 def test_relabel_recomputes_grams_and_fighter(client, players, monkeypatch):
@@ -118,6 +175,10 @@ def test_relabel_recomputes_grams_and_fighter(client, players, monkeypatch):
     assert chicken["label"] == "chicken breast"
     assert chicken["grams"] != pizza["grams"]
     assert updated["fighter"]["attack"] > attack_before
+
+    confirmed = client.post(f"/meals/{meal['meal_id']}/confirm")
+    assert confirmed.status_code == 200, confirmed.text
+    assert client.get(f"/fighters/{players[1]}/today").json() == confirmed.json()["fighter"]
 
     bad = client.patch(f"/meals/{meal['meal_id']}/items/{pizza['item_id']}", json={"label": "haggis"})
     assert bad.status_code == 400

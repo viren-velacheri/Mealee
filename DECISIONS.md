@@ -50,6 +50,13 @@ One line per non-obvious choice: what was chosen over what, and why.
   rounds half to even and Swift rounds half away from zero.
 - Empty error handling on `/meals` narrowed to unreadable images: a missing dependency or a
   bug in the CV path surfaces as a 500 in the log rather than a "bad photo" hint to the player.
+- A missing card or fork uses an explicitly `estimated` scale based on a tightly framed 300 mm
+  scene: classification should still work for bowls, while the UI remains honest that grams are approximate.
+- COCO `cup` detections are ignored rather than mapped to coffee: a container does not identify its
+  contents, and coffee can be logged explicitly with the intake control.
+- Scanned meals remain `draft` until the review screen confirms them: Retake and Cancel must not
+  quietly change fighter stats or Foodex discoveries, and the existing meal status field provides
+  that boundary without attempting to roll back already-published game state.
 - try/finally and a narrow except inside `realtime.py` despite the "catch only at route
   boundaries" rule: a WebSocket hold-open loop only ever exits by exception, so the
   teardown that releases the Redis subscription has to live in a finally. Without it every

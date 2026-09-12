@@ -1,7 +1,7 @@
 """Photo to labelled regions with gram estimates. The CV core.
 
 1. Find the scale reference: a credit card by contour geometry, or a fork from the
-   segmenter. px_per_mm comes from the reference's longest side.
+   segmenter. Without one, estimate scale from a tightly framed 300 mm scene.
 2. Segment food regions with YOLO. Keep confident masks above 1% of the image, merge
    overlapping masks of the same class, simplify to polygons under 40 points.
 3. Label: YOLO class if it maps to foods.yaml, else one constrained vision call.
@@ -27,6 +27,7 @@ CARD_LONG_MM = 85.6
 CARD_ASPECT = 85.6 / 54.0
 CARD_ASPECT_TOLERANCE = 0.12
 FORK_LONG_MM = 190.0
+ESTIMATED_FRAME_SHORT_SIDE_MM = 300.0
 
 MIN_MASK_CONFIDENCE = 0.35
 MIN_REGION_SHARE_OF_IMAGE = 0.01
@@ -49,14 +50,9 @@ COCO_TO_FOOD = {
     "carrot": "carrots",
     "pizza": "pizza slice",
     "cake": "cake",
-    "cup": "coffee",
 }
 COCO_IGNORED = {"person", "dining table", "bottle", "knife", "spoon", "chair", "wine glass",
-                "cell phone", "laptop", "book", "vase", "potted plant", "handbag", "backpack"}
-
-
-class ScaleReferenceNotFound(Exception):
-    pass
+                "cup", "cell phone", "laptop", "book", "vase", "potted plant", "handbag", "backpack"}
 
 
 @dataclass
@@ -197,7 +193,10 @@ def analyze(jpeg_bytes: bytes) -> Analysis:
     if px_per_mm is None:
         scale_type, px_per_mm = "fork", fork_px_per_mm(detections)
     if px_per_mm is None:
-        raise ScaleReferenceNotFound()
+        # Capture UI asks for a tight meal frame. This keeps classification useful for
+        # bowls while making the lower-confidence portion estimate explicit to clients.
+        scale_type = "estimated"
+        px_per_mm = min(image_w, image_h) / ESTIMATED_FRAME_SHORT_SIDE_MM
 
     regions: list[Region] = []
     for coco_name, confidence, mask in detections:

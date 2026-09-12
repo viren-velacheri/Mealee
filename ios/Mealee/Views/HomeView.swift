@@ -50,6 +50,7 @@ struct HomeView: View {
         .navigationTitle("Today's fighter")
         .toolbar {
             Button { showFoodex = true } label: { Image(systemName: "book.closed.fill") }
+                .accessibilityLabel("Foodex")
         }
         .fullScreenCover(isPresented: $showCapture) { CaptureView() }
         .sheet(isPresented: $showFoodex) { FoodexView() }
