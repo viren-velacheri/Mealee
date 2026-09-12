@@ -8,6 +8,7 @@ struct JoinView: View {
     @State private var busyLabel: String?
     @State private var startingOne = false
     @State private var blocker: String?
+    @State private var showingCustomEmoji = false
 
     private let emojiChoices = ["🍗", "🥦", "🍩", "🍕", "🍣", "🥑", "🌶️", "🧀", "🍜", "🍎", "🥯", "🍪"]
 
@@ -65,11 +66,25 @@ struct JoinView: View {
                             .scaleEffect(choice == emoji ? 1.15 : 1)
                             .onTapGesture { Haptics.tap(); withAnimation(Motion.bounce) { emoji = choice } }
                     }
+                    Button { showingCustomEmoji = true } label: {
+                        VStack(spacing: 2) {
+                            Text(emojiChoices.contains(emoji) ? "+" : emoji).font(.system(size: 30, weight: .medium))
+                            Text("custom").font(.system(size: 9, weight: .semibold, design: .rounded))
+                        }
+                        .foregroundStyle(Palette.ink).frame(width: 50, height: 50)
+                        .background(emojiChoices.contains(emoji) ? .clear : Palette.leaf.opacity(0.5), in: Circle())
+                    }
+                    .accessibilityLabel("Choose a custom emoji")
                 }
             }
             Notice(kind: .guidance, text: "\(emoji) is picked. Tap another to change it.")
         }
         .glassCard()
+        .sheet(isPresented: $showingCustomEmoji) {
+            CustomEmojiSheet(current: emoji) { choice in
+                withAnimation(Motion.bounce) { emoji = choice }
+            }
+        }
     }
 
     private var joinCard: some View {

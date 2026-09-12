@@ -61,6 +61,23 @@ struct MealResponse: Codable, Equatable {
     let fighter: FighterStats
 }
 
+struct FoodSearchResult: Codable, Equatable, Identifiable {
+    let fdcId: Int
+    let label: String
+    let source: String
+    let kcal: Double
+    let proteinG: Double
+    let fiberG: Double
+    let sodiumMg: Double
+    let caffeineMg: Double
+
+    var id: Int { fdcId }
+}
+
+struct FoodSearchResponse: Codable, Equatable {
+    let items: [FoodSearchResult]
+}
+
 struct Combatant: Codable, Equatable {
     let playerId: String
     let name: String

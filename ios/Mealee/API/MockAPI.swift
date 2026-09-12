@@ -96,6 +96,58 @@ final class MockAPI: MealeeAPI {
         return updated
     }
 
+    func searchFoods(query: String) async throws -> [FoodSearchResult] {
+        await delay()
+        return allSearchFoods.filter { $0.label.localizedCaseInsensitiveContains(query) }
+    }
+
+    private var allSearchFoods: [FoodSearchResult] {
+        foodClassLabels.enumerated().map { index, label in
+            FoodSearchResult(fdcId: 100_000 + index, label: label, source: "Mealee catalog",
+                             kcal: 100, proteinG: 5, fiberG: 2, sodiumMg: 50, caffeineMg: 0)
+        } + [
+            FoodSearchResult(fdcId: 173032, label: "Goji berries, dried", source: "USDA SR Legacy",
+                             kcal: 349, proteinG: 14.3, fiberG: 13, sodiumMg: 298, caffeineMg: 0),
+        ]
+    }
+
+    func updateMealItem(mealId: String, itemId: String, fdcId: Int,
+                        grams: Double) async throws -> MealResponse {
+        await delay()
+        guard let draft = draftMeals[mealId],
+              let food = allSearchFoods.first(where: { $0.fdcId == fdcId }) else {
+            throw APIError(error: "unknown food", hint: "Search for the food again.")
+        }
+        let items = draft.meal.items.map { item in
+            item.itemId == itemId
+                ? MealItem(itemId: item.itemId, label: food.label, fdcId: food.fdcId, grams: grams,
+                           gramsLow: grams * 0.7, gramsHigh: grams * 1.3, confidence: 1,
+                           polygon: item.polygon, isNew: false)
+                : item
+        }
+        return storeDraft(draft, items: items)
+    }
+
+    func addMealItem(mealId: String, fdcId: Int, grams: Double) async throws -> MealResponse {
+        await delay()
+        guard let draft = draftMeals[mealId],
+              let food = allSearchFoods.first(where: { $0.fdcId == fdcId }) else {
+            throw APIError(error: "unknown food", hint: "Search for the food again.")
+        }
+        let item = MealItem(itemId: "\(mealId)-\(UUID().uuidString)", label: food.label,
+                            fdcId: food.fdcId, grams: grams, gramsLow: grams * 0.7,
+                            gramsHigh: grams * 1.3, confidence: 1, polygon: [], isNew: false)
+        return storeDraft(draft, items: draft.meal.items + [item])
+    }
+
+    func deleteMealItem(mealId: String, itemId: String) async throws -> MealResponse {
+        await delay()
+        guard let draft = draftMeals[mealId] else {
+            throw APIError(error: "unknown meal", hint: "Scan the meal again.")
+        }
+        return storeDraft(draft, items: draft.meal.items.filter { $0.itemId != itemId })
+    }
+
     func confirmMeal(mealId: String) async throws -> MealResponse {
         await delay()
         guard let draft = draftMeals.removeValue(forKey: mealId) else {
@@ -191,6 +243,16 @@ final class MockAPI: MealeeAPI {
         for continuation in eventContinuations.value.values {
             continuation.yield(event)
         }
+    }
+
+    private func storeDraft(_ draft: (playerId: String, meal: MealResponse),
+                            items: [MealItem]) -> MealResponse {
+        let updated = MealResponse(mealId: draft.meal.mealId, imageW: draft.meal.imageW,
+                                   imageH: draft.meal.imageH, imageUrl: draft.meal.imageUrl,
+                                   items: items, scale: draft.meal.scale,
+                                   dayTotals: draft.meal.dayTotals, fighter: draft.meal.fighter)
+        draftMeals[draft.meal.mealId] = (draft.playerId, updated)
+        return updated
     }
 
     private func playerRef(_ playerId: String) -> PlayerRef {

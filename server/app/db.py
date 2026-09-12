@@ -57,6 +57,18 @@ class MealItem(Base):
     corrected: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
+class CatalogFood(Base):
+    __tablename__ = "catalog_foods"
+    fdc_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    label: Mapped[str] = mapped_column(String(160))
+    source: Mapped[str] = mapped_column(String(64))
+    kcal: Mapped[float] = mapped_column(Float)
+    protein_g: Mapped[float] = mapped_column(Float)
+    fiber_g: Mapped[float] = mapped_column(Float)
+    sodium_mg: Mapped[float] = mapped_column(Float)
+    caffeine_mg: Mapped[float] = mapped_column(Float, default=0)
+
+
 class IntakeEvent(Base):
     __tablename__ = "intake_events"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)

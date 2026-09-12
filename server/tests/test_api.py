@@ -6,7 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
 
-from app import portions
+from app import foods, portions
 from app.main import app
 
 
@@ -182,6 +182,52 @@ def test_relabel_recomputes_grams_and_fighter(client, players, monkeypatch):
 
     bad = client.patch(f"/meals/{meal['meal_id']}/items/{pizza['item_id']}", json={"label": "haggis"})
     assert bad.status_code == 400
+
+
+def test_search_and_edit_a_mixed_bowl(client, monkeypatch):
+    async def fake_usda_search(query):
+        assert query == "goji"
+        return [foods.FoodSearchResult(
+            fdc_id=173032, label="Goji berries, dried", source="USDA SR Legacy",
+            kcal=349, protein_g=14.3, fiber_g=13.0, sodium_mg=298, caffeine_mg=0,
+        )]
+
+    monkeypatch.setattr(foods, "search_usda", fake_usda_search)
+    search = client.get("/foods/search", params={"q": "goji"})
+    assert search.status_code == 200, search.text
+    assert search.json()["items"][0]["label"] == "Goji berries, dried"
+
+    league = client.post("/leagues", json={"name": "Mixed Bowl League"}).json()["code"]
+    player_id = client.post("/players", json={
+        "league_code": league, "name": "Bowl Editor", "emoji": "🥣",
+    }).json()["player_id"]
+    monkeypatch.setattr(portions, "segment", _fake_segment)
+    monkeypatch.setattr(portions, "find_card_px_per_mm", lambda image: None)
+    meal = client.post("/meals", data={"player_id": player_id},
+                       files={"image": ("plate.jpg", _plate_jpeg(), "image/jpeg")}).json()
+    pizza = next(item for item in meal["items"] if item["label"] == "pizza slice")
+    broccoli = next(item for item in meal["items"] if item["label"] == "broccoli")
+
+    changed = client.patch(
+        f"/meals/{meal['meal_id']}/items/{pizza['item_id']}",
+        json={"fdc_id": 173032, "grams": 25},
+    )
+    assert changed.status_code == 200, changed.text
+    added = client.post(
+        f"/meals/{meal['meal_id']}/items", json={"fdc_id": 170393, "grams": 40},
+    )
+    assert added.status_code == 200, added.text
+    removed = client.delete(f"/meals/{meal['meal_id']}/items/{broccoli['item_id']}")
+    assert removed.status_code == 200, removed.text
+
+    edited = removed.json()
+    assert {(item["label"], item["grams"]) for item in edited["items"]} == {
+        ("Goji berries, dried", 25.0), ("carrots", 40.0),
+    }
+    assert edited["day_totals"]["protein_g"] == pytest.approx(3.9, abs=0.1)
+    confirmed = client.post(f"/meals/{meal['meal_id']}/confirm")
+    assert confirmed.status_code == 200, confirmed.text
+    assert confirmed.json()["fighter"] == edited["fighter"]
 
 
 def test_intake_presets(client, players):

@@ -39,3 +39,51 @@ struct BusyOverlay: View {
         .glassCard()
     }
 }
+
+enum AvatarChoice {
+    static func emoji(from input: String) -> String? {
+        guard let character = input.trimmingCharacters(in: .whitespacesAndNewlines).first else { return nil }
+        let scalars = character.unicodeScalars
+        let presentsAsEmoji = scalars.contains { $0.properties.isEmojiPresentation }
+            || scalars.contains { $0.value == 0xFE0F }
+            || (scalars.count > 1 && scalars.contains { $0.properties.isEmoji })
+        guard presentsAsEmoji else { return nil }
+        return String(character)
+    }
+}
+
+struct CustomEmojiSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var input: String
+    let choose: (String) -> Void
+
+    init(current: String, choose: @escaping (String) -> Void) {
+        _input = State(initialValue: current)
+        self.choose = choose
+    }
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 20) {
+                Text(AvatarChoice.emoji(from: input) ?? "🙂").font(.system(size: 88))
+                    .frame(width: 132, height: 132).background(Palette.mint.opacity(0.4), in: Circle())
+                TextField("Your emoji", text: $input).font(TypeScale.title).multilineTextAlignment(.center)
+                    .textInputAutocapitalization(.never).autocorrectionDisabled().padding().glassCard()
+                Notice(kind: .guidance,
+                       text: "Enter or paste any one emoji. Use the globe key to open the emoji keyboard.")
+                Button {
+                    guard let emoji = AvatarChoice.emoji(from: input) else { return }
+                    Haptics.success(); choose(emoji); dismiss()
+                } label: {
+                    Text("Use this face").primaryPill()
+                }
+                .disabled(AvatarChoice.emoji(from: input) == nil)
+                Spacer()
+            }
+            .padding(Layout.gutter).background(AuroraBackground())
+            .navigationTitle("Custom face").navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } } }
+        }
+        .presentationDetents([.medium])
+    }
+}

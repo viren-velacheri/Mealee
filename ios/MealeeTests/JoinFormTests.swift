@@ -37,4 +37,12 @@ final class JoinFormTests: XCTestCase {
         let form = JoinForm(name: "Viren", code: "", leagueName: "Hall 3 Lunch")
         XCTAssertNil(form.missingForCreate)
     }
+
+    func testCustomAvatarAcceptsOneEmojiAndRejectsPlainText() {
+        XCTAssertEqual(AvatarChoice.emoji(from: "🫐"), "🫐")
+        XCTAssertEqual(AvatarChoice.emoji(from: "  👨‍🍳 extra"), "👨‍🍳")
+        XCTAssertNil(AvatarChoice.emoji(from: "V"))
+        XCTAssertNil(AvatarChoice.emoji(from: "1"))
+        XCTAssertNil(AvatarChoice.emoji(from: ""))
+    }
 }

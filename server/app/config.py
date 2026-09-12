@@ -14,6 +14,8 @@ API_PORT = int(os.environ.get("API_PORT", "8000"))
 UPLOAD_DIR = Path(os.environ.get("UPLOAD_DIR", SERVER_DIR / "uploads"))
 SQLITE_PATH = Path(os.environ.get("SQLITE_PATH", SERVER_DIR / "mealee.sqlite"))
 USDA_SQLITE_PATH = Path(os.environ.get("USDA_SQLITE_PATH", REPO_DIR / "data" / "usda.sqlite"))
+USDA_API_KEY = os.environ.get("USDA_API_KEY", "DEMO_KEY")
+USDA_API_URL = os.environ.get("USDA_API_URL", "https://api.nal.usda.gov/fdc/v1")
 FOODS_YAML_PATH = Path(os.environ.get("FOODS_YAML_PATH", REPO_DIR / "data" / "foods.yaml"))
 ARENA_HTML_PATH = Path(os.environ.get("ARENA_HTML_PATH", REPO_DIR / "arena" / "index.html"))
 

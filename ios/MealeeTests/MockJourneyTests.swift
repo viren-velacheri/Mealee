@@ -79,6 +79,32 @@ final class MockJourneyTests: XCTestCase {
         }
     }
 
+    func testDraftMealCanBeCorrectedAndSplitIntoIngredients() async throws {
+        let api = MockAPI()
+        let joined = try await api.join(
+            leagueCode: "DEMO", name: "Bowl Editor", emoji: "🥣", auth0Sub: nil)
+        let draft = try await api.uploadMeal(
+            playerId: joined.playerId, jpeg: Data([0xFF, 0xD8, 0xFF, 0xD9]))
+        let first = try XCTUnwrap(draft.items.first)
+        let last = try XCTUnwrap(draft.items.last)
+        let gojiResults = try await api.searchFoods(query: "goji")
+        let carrotResults = try await api.searchFoods(query: "carrots")
+        let goji = try XCTUnwrap(gojiResults.first)
+        let carrots = try XCTUnwrap(carrotResults.first)
+
+        let corrected = try await api.updateMealItem(
+            mealId: draft.mealId, itemId: first.itemId, fdcId: goji.fdcId, grams: 25)
+        XCTAssertEqual(corrected.items.first?.label, "Goji berries, dried")
+        XCTAssertEqual(corrected.items.first?.grams, 25)
+
+        let added = try await api.addMealItem(mealId: draft.mealId, fdcId: carrots.fdcId, grams: 40)
+        XCTAssertTrue(added.items.contains { $0.label == "carrots" && $0.grams == 40 })
+
+        let removed = try await api.deleteMealItem(mealId: draft.mealId, itemId: last.itemId)
+        XCTAssertFalse(removed.items.contains { $0.itemId == last.itemId })
+        try await api.discardMeal(mealId: draft.mealId)
+    }
+
     func testPhotoEncoderProducesAnUprightBoundedJPEG() throws {
         let sourceURL = try XCTUnwrap(
             Bundle(for: Self.self).url(forResource: "plate_fixture", withExtension: "jpg")

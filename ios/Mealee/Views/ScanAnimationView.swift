@@ -51,7 +51,7 @@ struct ScanAnimationView: View {
             ZStack(alignment: .topLeading) {
                 Palette.ink.opacity(0.92)
                 background(fit: fit)
-                ForEach(meal.items) { item in
+                ForEach(meal.items.filter { !$0.polygon.isEmpty }) { item in
                     let shape = PolygonShape(points: item.polygon, imageSize: imageSize, fit: fit)
                     Image(uiImage: image).resizable().frame(width: fit.width, height: fit.height).offset(x: fit.minX, y: fit.minY)
                         .mask(shape)

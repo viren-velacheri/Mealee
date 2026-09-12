@@ -22,11 +22,11 @@ final class MealeeUITests: XCTestCase {
         displayName.tap()
         displayName.typeText("Device Tester")
 
-        let leagueCode = app.textFields["4-letter code"]
+        let leagueCode = app.textFields["ABCD"]
         leagueCode.tap()
         leagueCode.typeText("DEMO")
         if app.keyboards.buttons["return"].exists { app.keyboards.buttons["return"].tap() }
-        app.buttons["Join"].tap()
+        app.buttons["Join league"].tap()
         app.tap()
 
         XCTAssertTrue(app.navigationBars["Today's fighter"].waitForExistence(timeout: 10))

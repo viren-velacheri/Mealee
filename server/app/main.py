@@ -8,6 +8,7 @@ from datetime import datetime
 from pathlib import Path
 
 import cv2
+import httpx
 import numpy as np
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile, WebSocket
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
@@ -18,9 +19,11 @@ from redis.exceptions import RedisError
 from sqlalchemy import select
 from starlette.websockets import WebSocketDisconnect
 
+from app import foods as food_catalog
 from app import game, identity, nightly, portions
 from app.config import ARENA_HTML_PATH, UPLOAD_DIR
-from app.db import Fight, IntakeEvent, League, Meal, MealItem, Player, get_session, init_db
+from app.db import (CatalogFood, Fight, IntakeEvent, League, Meal, MealItem, Player,
+                    get_session, init_db)
 from app.foods import class_labels, food_classes, warn_if_no_usda
 from app.realtime import realtime
 
@@ -78,6 +81,35 @@ def _league_or_404(session, code: str) -> League:
 @app.get("/health")
 def health():
     return {"ok": True, "classes": len(class_labels()), "time": datetime.utcnow().isoformat() + "Z"}
+
+
+@app.get("/foods/search")
+async def search_foods(q: str):
+    query = q.strip()[:60]
+    if len(query) < 2:
+        raise HTTPException(status_code=400, detail={"error": "search too short", "hint": "enter at least 2 characters"})
+    local_results = food_catalog.local_food_search(query)
+    try:
+        usda_results = await food_catalog.search_usda(query)
+    except (httpx.HTTPError, KeyError, TypeError, ValueError) as error:
+        if local_results:
+            log.warning("USDA food search failed; returning local matches: %s", error)
+            return {"items": [result.as_dict() for result in local_results]}
+        raise HTTPException(status_code=503, detail={
+            "error": "food search unavailable", "hint": "check the server connection and try again",
+        })
+
+    session = get_session()
+    for result in usda_results:
+        session.merge(CatalogFood(
+            fdc_id=result.fdc_id, label=result.label, source=result.source,
+            kcal=result.kcal, protein_g=result.protein_g, fiber_g=result.fiber_g,
+            sodium_mg=result.sodium_mg, caffeine_mg=result.caffeine_mg,
+        ))
+    session.commit()
+    combined = local_results + usda_results
+    unique = list({result.fdc_id: result for result in reversed(combined)}.values())
+    return {"items": [result.as_dict() for result in unique[:16]]}
 
 
 class CreateLeague(BaseModel):
@@ -216,6 +248,8 @@ def _meal_thumbnails(session, meal: Meal) -> dict[str, str]:
         if item.label not in food_classes():
             continue
         polygon = json.loads(item.polygon_json)
+        if len(polygon) < 3:
+            continue
         mask = cv2.fillPoly(np.zeros((meal.image_h, meal.image_w), dtype=np.uint8),
                             [np.array(polygon, dtype=np.int32)], 1).astype(bool)
         thumbs[item.label] = _save_thumbnail(image_bgr, mask, meal.player_id, item.label)
@@ -260,27 +294,58 @@ def discard_meal(meal_id: str):
     return {"ok": True}
 
 
-class Relabel(BaseModel):
-    label: str
+class MealItemUpdate(BaseModel):
+    label: str | None = None
+    fdc_id: int | None = None
+    grams: float | None = None
 
 
-@app.patch("/meals/{meal_id}/items/{item_id}")
-async def relabel_item(meal_id: str, item_id: str, body: Relabel):
-    session = get_session()
+class MealItemCreate(BaseModel):
+    fdc_id: int
+    grams: float
+
+
+def _food_choice(session, label: str | None, fdc_id: int | None) -> tuple[str, int, bool]:
+    if fdc_id is not None:
+        fixed = next((food for food in food_classes().values() if food.fdc_id == fdc_id), None)
+        if fixed is not None:
+            return fixed.label, fixed.fdc_id, True
+        catalog_food = session.get(CatalogFood, fdc_id)
+        if catalog_food is not None:
+            return catalog_food.label, catalog_food.fdc_id, False
+    if label in food_classes():
+        food = food_classes()[label]
+        return food.label, food.fdc_id, True
+    raise HTTPException(status_code=400, detail={"error": "unknown food", "hint": "search for the food first"})
+
+
+def _meal_and_item(session, meal_id: str, item_id: str) -> tuple[Meal, MealItem]:
     meal = session.get(Meal, meal_id)
     item = session.get(MealItem, item_id)
     if meal is None or item is None or item.meal_id != meal_id:
         raise HTTPException(status_code=404, detail={"error": "unknown item", "hint": "reload the meal"})
-    if body.label not in food_classes():
-        raise HTTPException(status_code=400, detail={"error": "unknown label", "hint": "pick from the class list"})
-    item.label = body.label
-    item.fdc_id = food_classes()[body.label].fdc_id
-    item.grams, item.grams_low, item.grams_high = portions.regrams(body.label, item.area_px, meal.scale_px_per_mm)
+    return meal, item
+
+
+@app.patch("/meals/{meal_id}/items/{item_id}")
+async def relabel_item(meal_id: str, item_id: str, body: MealItemUpdate):
+    session = get_session()
+    meal, item = _meal_and_item(session, meal_id, item_id)
+    if body.label is not None or body.fdc_id is not None:
+        item.label, item.fdc_id, is_fixed = _food_choice(session, body.label, body.fdc_id)
+        if body.grams is None and is_fixed and item.area_px > 0:
+            item.grams, item.grams_low, item.grams_high = portions.regrams(
+                item.label, item.area_px, meal.scale_px_per_mm)
+    if body.grams is not None:
+        if not 0.1 <= body.grams <= 5000:
+            raise HTTPException(status_code=400, detail={"error": "bad amount", "hint": "enter grams between 0.1 and 5000"})
+        item.grams = body.grams
+        item.grams_low, item.grams_high = body.grams * 0.7, body.grams * 1.3
     item.corrected = True
     session.commit()
 
     if meal.status == "draft":
-        new_labels = game.undiscovered_labels(session, meal.player_id, [body.label])
+        new_labels = game.undiscovered_labels(session, meal.player_id, [item.label])
         return game.meal_payload(session, meal, new_labels)
 
     image_bgr = portions.decode_image((UPLOAD_DIR / meal.image_path).read_bytes())
@@ -288,12 +353,44 @@ async def relabel_item(meal_id: str, item_id: str, body: Relabel):
     mask = cv2.fillPoly(np.zeros((meal.image_h, meal.image_w), dtype=np.uint8),
                         [np.array(polygon, dtype=np.int32)], 1).astype(bool)
     new_labels = game.record_discoveries(session, meal.player_id, {
-        body.label: _save_thumbnail(image_bgr, mask, meal.player_id, body.label)})
+        item.label: _save_thumbnail(image_bgr, mask, meal.player_id, item.label)})
     payload = game.meal_payload(session, meal, new_labels)
     player = session.get(Player, meal.player_id)
     await realtime.publish(player.league_id, {
         "type": "fighter_update", "player_id": player.id, "fighter": payload["fighter"]})
     return payload
+
+
+@app.post("/meals/{meal_id}/items")
+def add_meal_item(meal_id: str, body: MealItemCreate):
+    session = get_session()
+    meal = session.get(Meal, meal_id)
+    if meal is None:
+        raise HTTPException(status_code=404, detail={"error": "unknown meal", "hint": "scan the meal again"})
+    if meal.status != "draft":
+        raise HTTPException(status_code=409, detail={"error": "meal already confirmed", "hint": "edit before confirming"})
+    if not 0.1 <= body.grams <= 5000:
+        raise HTTPException(status_code=400, detail={"error": "bad amount", "hint": "enter grams between 0.1 and 5000"})
+    label, fdc_id, _ = _food_choice(session, None, body.fdc_id)
+    session.add(MealItem(
+        id=str(uuid.uuid4()), meal_id=meal.id, label=label, fdc_id=fdc_id,
+        grams=body.grams, grams_low=body.grams * 0.7, grams_high=body.grams * 1.3,
+        confidence=1, area_px=0, polygon_json="[]", corrected=True,
+    ))
+    session.commit()
+    new_labels = game.undiscovered_labels(session, meal.player_id, [label])
+    return game.meal_payload(session, meal, new_labels)
+
+
+@app.delete("/meals/{meal_id}/items/{item_id}")
+def delete_meal_item(meal_id: str, item_id: str):
+    session = get_session()
+    meal, item = _meal_and_item(session, meal_id, item_id)
+    if meal.status != "draft":
+        raise HTTPException(status_code=409, detail={"error": "meal already confirmed", "hint": "edit before confirming"})
+    session.delete(item)
+    session.commit()
+    return game.meal_payload(session, meal)
 
 
 @app.get("/players/{player_id}/discoveries")

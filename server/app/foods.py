@@ -10,9 +10,10 @@ import sqlite3
 from dataclasses import dataclass
 from functools import lru_cache
 
+import httpx
 import yaml
 
-from app.config import FOODS_YAML_PATH, USDA_SQLITE_PATH
+from app.config import FOODS_YAML_PATH, USDA_API_KEY, USDA_API_URL, USDA_SQLITE_PATH
 from app.stats import DayTotals
 
 log = logging.getLogger("mealee.foods")
@@ -47,6 +48,25 @@ class NutrientsPer100g:
     caffeine_mg: float
 
 
+@dataclass(frozen=True)
+class FoodSearchResult:
+    fdc_id: int
+    label: str
+    source: str
+    kcal: float
+    protein_g: float
+    fiber_g: float
+    sodium_mg: float
+    caffeine_mg: float
+
+    def as_dict(self) -> dict:
+        return {
+            "fdc_id": self.fdc_id, "label": self.label, "source": self.source,
+            "kcal": self.kcal, "protein_g": self.protein_g, "fiber_g": self.fiber_g,
+            "sodium_mg": self.sodium_mg, "caffeine_mg": self.caffeine_mg,
+        }
+
+
 @lru_cache(maxsize=1)
 def food_classes() -> dict[str, FoodClass]:
     with open(FOODS_YAML_PATH) as handle:
@@ -56,6 +76,45 @@ def food_classes() -> dict[str, FoodClass]:
 
 def class_labels() -> list[str]:
     return list(food_classes().keys())
+
+
+def local_food_search(query: str) -> list[FoodSearchResult]:
+    lowered = query.casefold()
+    results = []
+    for food in food_classes().values():
+        if lowered not in food.label.casefold():
+            continue
+        nutrients = nutrients_per_100g(food.label)
+        results.append(FoodSearchResult(
+            fdc_id=food.fdc_id, label=food.label, source="Mealee catalog",
+            kcal=nutrients.kcal, protein_g=nutrients.protein_g,
+            fiber_g=nutrients.fiber_g, sodium_mg=nutrients.sodium_mg,
+            caffeine_mg=nutrients.caffeine_mg,
+        ))
+    return results
+
+
+async def search_usda(query: str) -> list[FoodSearchResult]:
+    params = {
+        "api_key": USDA_API_KEY, "query": query, "pageSize": 12,
+        "dataType": "Foundation,SR Legacy,Survey (FNDDS)",
+    }
+    async with httpx.AsyncClient(timeout=5) as client:
+        response = await client.get(f"{USDA_API_URL}/foods/search", params=params)
+        response.raise_for_status()
+    results = []
+    for food in response.json().get("foods", []):
+        amounts = {row.get("nutrientId"): row.get("value", 0) for row in food.get("foodNutrients", [])}
+        results.append(FoodSearchResult(
+            fdc_id=int(food["fdcId"]), label=food["description"].strip(),
+            source=f"USDA {food.get('dataType', 'FoodData Central')}",
+            kcal=float(amounts.get(NUTRIENT_KCAL, 0)),
+            protein_g=float(amounts.get(NUTRIENT_PROTEIN, 0)),
+            fiber_g=float(amounts.get(NUTRIENT_FIBER, 0)),
+            sodium_mg=float(amounts.get(NUTRIENT_SODIUM, 0)),
+            caffeine_mg=float(amounts.get(NUTRIENT_CAFFEINE, 0)),
+        ))
+    return results
 
 
 def usda_available() -> bool:

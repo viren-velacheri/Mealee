@@ -3,7 +3,8 @@ import SwiftUI
 struct MealReviewView: View {
     @Environment(AppState.self) private var appState
     @State private var viewModel: MealReviewViewModel
-    @State private var pickingFor: MealItem?
+    @State private var editingItem: MealItem?
+    @State private var addingIngredient = false
     @State private var showDetails = false
     let fighterBefore: FighterStats
     let onRetake: () -> Void
@@ -37,7 +38,14 @@ struct MealReviewView: View {
                     .overlay(RoundedRectangle(cornerRadius: Layout.corner, style: .continuous).strokeBorder(.white.opacity(0.7), lineWidth: 1))
                     .shadow(color: Palette.sage.opacity(0.3), radius: 24, y: 12)
                 if viewModel.scanPhase == .revealed {
-                    MealItemList(meal: viewModel.meal, showDetails: $showDetails, pick: { pickingFor = $0 }).transition(.liquid)
+                    MealItemList(meal: viewModel.meal, showDetails: $showDetails,
+                                 edit: { editingItem = $0 },
+                                 remove: { item in Task { await viewModel.remove(item, using: appState.api) } })
+                        .transition(.liquid)
+                    Button { addingIngredient = true } label: {
+                        Label("Add ingredient", systemImage: "plus").primaryPill(filled: false)
+                    }
+                    .buttonStyle(Pressable()).disabled(viewModel.isBusy)
                     Button { Haptics.success(); Task { await viewModel.confirm(using: appState.api) } } label: {
                         Text("Confirm meal").primaryPill()
                     }
@@ -56,12 +64,15 @@ struct MealReviewView: View {
         .overlay { if viewModel.isSubmitting { ProgressView().tint(Palette.leaf).scaleEffect(1.5) } }
         .animation(Motion.settle, value: viewModel.scanPhase)
         .interactiveDismissDisabled()
-        .sheet(item: $pickingFor) { item in
-            LabelPickerSheet(current: item.label) { label in
-                pickingFor = nil
-                Task { await viewModel.relabel(item, to: label, using: appState.api) }
+        .sheet(item: $editingItem) { item in
+            FoodSearchSheet(current: item, api: appState.api) { food, grams in
+                await viewModel.update(item, with: food, grams: grams, using: appState.api)
             }
-            .presentationDetents([.medium, .large]).presentationBackground(.ultraThinMaterial)
+        }
+        .sheet(isPresented: $addingIngredient) {
+            FoodSearchSheet(current: nil, api: appState.api) { food, grams in
+                await viewModel.add(food, grams: grams, using: appState.api)
+            }
         }
         .fullScreenCover(isPresented: $viewModel.showDelta) {
             StatDeltaView(before: fighterBefore, after: viewModel.meal.fighter) {
@@ -86,13 +97,15 @@ struct MealReviewView: View {
 struct MealItemList: View {
     let meal: MealResponse
     @Binding var showDetails: Bool
-    let pick: (MealItem) -> Void
+    let edit: (MealItem) -> Void
+    let remove: (MealItem) -> Void
 
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 10) {
                 ForEach(meal.items) { item in
-                    Button { Haptics.tap(); pick(item) } label: {
+                    HStack(spacing: 8) {
+                    Button { Haptics.tap(); edit(item) } label: {
                         HStack(spacing: 12) {
                             Text(foodClassEmoji[item.label] ?? "❓").font(.system(size: 34))
                             VStack(alignment: .leading, spacing: 2) {
@@ -100,7 +113,7 @@ struct MealItemList: View {
                                     Text(item.label).font(TypeScale.heading).foregroundStyle(Palette.ink)
                                     if item.isNew { Pill(text: "new", tint: Palette.leaf) }
                                 }
-                                Text("tap to change").font(TypeScale.caption).foregroundStyle(Palette.slate)
+                                Text("tap to edit").font(TypeScale.caption).foregroundStyle(Palette.slate)
                             }
                             Spacer()
                             VStack(alignment: .trailing, spacing: 0) {
@@ -109,9 +122,15 @@ struct MealItemList: View {
                                 if showDetails { Text("\(Int(item.confidence * 100))% sure").font(TypeScale.caption).foregroundStyle(Palette.slate) }
                             }
                         }
-                        .glassCard(padding: 14)
                     }
                     .buttonStyle(Pressable())
+                    Button(role: .destructive) { Haptics.thud(); remove(item) } label: {
+                        Image(systemName: "trash").font(TypeScale.heading).foregroundStyle(Palette.slate)
+                            .padding(10).contentShape(Rectangle())
+                    }
+                    .accessibilityLabel("Remove \(item.label)")
+                    }
+                    .glassCard(padding: 14)
                 }
                 Button { Haptics.tap(); withAnimation(Motion.bounce) { showDetails.toggle() } } label: {
                     HStack(spacing: 4) {
@@ -121,33 +140,6 @@ struct MealItemList: View {
                     .font(TypeScale.caption).foregroundStyle(Palette.slate)
                 }
             }
-        }
-    }
-}
-
-struct LabelPickerSheet: View {
-    let current: String
-    let choose: (String) -> Void
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 4)
-
-    var body: some View {
-        ScrollView(showsIndicators: false) {
-            Text("What is it?").font(TypeScale.title).foregroundStyle(Palette.ink).padding(.top, 20)
-            LazyVGrid(columns: columns, spacing: 10) {
-                ForEach(foodClassLabels, id: \.self) { label in
-                    Button { Haptics.tap(); choose(label) } label: {
-                        VStack(spacing: 4) {
-                            Text(foodClassEmoji[label] ?? "🍽️").font(.system(size: 30))
-                            Text(label).font(.system(size: 10, weight: .semibold, design: .rounded)).foregroundStyle(Palette.ink).lineLimit(1)
-                        }
-                        .frame(maxWidth: .infinity).padding(.vertical, 10)
-                        .background(label == current ? Palette.leaf.opacity(0.45) : Palette.mint.opacity(0.3),
-                                    in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    }
-                    .buttonStyle(Pressable())
-                }
-            }
-            .padding(Layout.gutter)
         }
     }
 }

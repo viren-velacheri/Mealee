@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from app import battle, identity
 from app.config import LOCAL_TZ
-from app.db import (Discovery, Fight, FightTurn, Fighter, IntakeEvent, League, Meal,
+from app.db import (CatalogFood, Discovery, Fight, FightTurn, Fighter, IntakeEvent, League, Meal,
                     MealItem, Player)
 from app.foods import add_item_to_totals, food_classes
 from app.stats import (COFFEE_MG_PER_PRESET, WATER_ML_PER_PRESET, DayTotals, FighterStats,
@@ -46,6 +46,15 @@ def day_totals(session: Session, player_id: str, day: date,
         for item in session.scalars(select(MealItem).where(MealItem.meal_id == meal.id)):
             if item.label in food_classes():
                 add_item_to_totals(totals, item.label, item.grams)
+            else:
+                catalog_food = session.get(CatalogFood, item.fdc_id)
+                if catalog_food is not None:
+                    scale = item.grams / 100.0
+                    totals.kcal += catalog_food.kcal * scale
+                    totals.protein_g += catalog_food.protein_g * scale
+                    totals.fiber_g += catalog_food.fiber_g * scale
+                    totals.sodium_mg += catalog_food.sodium_mg * scale
+                    totals.caffeine_mg += catalog_food.caffeine_mg * scale
     intake = session.scalars(select(IntakeEvent).where(
         IntakeEvent.player_id == player_id, IntakeEvent.day == day)).all()
     for event in intake:

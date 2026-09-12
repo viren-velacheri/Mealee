@@ -88,6 +88,31 @@ final class LiveAPI: MealeeAPI {
         return try await send(try request("/meals/\(mealId)/items/\(itemId)", method: "PATCH", body: Body(label: label)))
     }
 
+    func searchFoods(query: String) async throws -> [FoodSearchResult] {
+        var components = URLComponents(url: baseURL.appending(path: "/foods/search"),
+                                       resolvingAgainstBaseURL: false)!
+        components.queryItems = [URLQueryItem(name: "q", value: query)]
+        let response: FoodSearchResponse = try await send(URLRequest(url: components.url!, timeoutInterval: 5))
+        return response.items
+    }
+
+    func updateMealItem(mealId: String, itemId: String, fdcId: Int,
+                        grams: Double) async throws -> MealResponse {
+        struct Body: Encodable { let fdcId: Int; let grams: Double }
+        return try await send(try request("/meals/\(mealId)/items/\(itemId)", method: "PATCH",
+                                          body: Body(fdcId: fdcId, grams: grams)))
+    }
+
+    func addMealItem(mealId: String, fdcId: Int, grams: Double) async throws -> MealResponse {
+        struct Body: Encodable { let fdcId: Int; let grams: Double }
+        return try await send(try request("/meals/\(mealId)/items", method: "POST",
+                                          body: Body(fdcId: fdcId, grams: grams)))
+    }
+
+    func deleteMealItem(mealId: String, itemId: String) async throws -> MealResponse {
+        try await send(try request("/meals/\(mealId)/items/\(itemId)", method: "DELETE"))
+    }
+
     func confirmMeal(mealId: String) async throws -> MealResponse {
         try await send(try request("/meals/\(mealId)/confirm", method: "POST"))
     }
