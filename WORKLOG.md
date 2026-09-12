@@ -65,3 +65,8 @@ open. Commit hashes refer to branch `claude/hopeful-mayer-q59x3p`.
 - Open, unchanged: spikes 1, 2, 4 need the Mac and photos; `fdc_id` values need the USDA
   verify step; Redis Cloud and Atlas need a live check from a laptop; Auth0 callback and
   logout URLs are still unset in the dashboard.
+- Merged `bc3b5e9` (draft/confirm/discard meal flow, estimated scale instead of a 400 when
+  no card or fork is found, iOS journey and UI tests, `uv.lock`). No file overlap with the
+  Redis work. After the merge: 36 Python tests pass; the Swift API layer with
+  `confirmMeal`/`discardMeal` compiles on Linux; `BattleSimTests` 4/4. `MockJourneyTests`
+  imports UIKit, so it waits for Xcode.
