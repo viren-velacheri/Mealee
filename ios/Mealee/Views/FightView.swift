@@ -18,6 +18,20 @@ struct FightView: View {
         .animation(Motion.settle, value: viewModel.fight == nil)
         .toolbarBackground(.hidden, for: .navigationBar)
         .navigationTitle("")
+        // The challenged phone has to play the fight too, whichever screen it was on.
+        .task { await appState.refresh() }
+        .onChange(of: appState.lastFight) { _, fight in
+            guard let fight, fight.fightId != viewModel.fight?.fightId, isMine(fight) else { return }
+            if viewModel.fight == nil || viewModel.isFinished {
+                Haptics.thud()
+                viewModel.load(fight)
+            }
+        }
+    }
+
+    private func isMine(_ fight: FightResponse) -> Bool {
+        guard let playerId = appState.playerId else { return false }
+        return fight.a.playerId == playerId || fight.b.playerId == playerId
     }
 
     private var picker: some View {
