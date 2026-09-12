@@ -133,6 +133,7 @@ class Discovery(Base):
     label: Mapped[str] = mapped_column(String(32))
     week_start: Mapped[date] = mapped_column(Date)
     thumbnail_path: Mapped[str] = mapped_column(String(256))
+    found_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
 engine = create_engine(f"sqlite:///{SQLITE_PATH}", connect_args={"check_same_thread": False})

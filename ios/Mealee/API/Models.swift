@@ -181,6 +181,7 @@ struct IntakeResponse: Codable, Equatable {
 struct Discovery: Codable, Equatable, Identifiable {
     let label: String
     let thumbnailUrl: String
+    let foundAt: String?
 
     var id: String { label }
 }

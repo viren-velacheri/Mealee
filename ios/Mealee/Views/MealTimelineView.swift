@@ -27,13 +27,11 @@ private struct TimelineRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            VStack(spacing: 0) {
-                Text(clockTime).font(TypeScale.caption).foregroundStyle(Palette.muted)
-                    .frame(width: 52, alignment: .trailing)
-                Spacer(minLength: 0)
-            }
             spine
             VStack(alignment: .leading, spacing: 6) {
+                // The clock leads the row: the day reads as a sequence of times, and it
+                // can no longer be clipped by a fixed column at large text sizes.
+                Text(clockTime).font(TypeScale.label).foregroundStyle(Palette.ink)
                 Text(entry.label).font(TypeScale.body).foregroundStyle(Palette.ink)
                 if !entry.nutrients.summary.isEmpty {
                     Text(entry.nutrients.summary.map { "\($0.1) \($0.0)" }.joined(separator: " · "))
@@ -70,8 +68,19 @@ private struct TimelineRow: View {
         .frame(width: 10)
     }
 
+    // The server sends microseconds on drinks and none on meals, and ISO8601DateFormatter
+    // parses only what it is told to expect, so try both.
+    private static let withFraction: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter
+    }()
+
+    private static let plain = ISO8601DateFormatter()
+
     private var clockTime: String {
-        guard let date = ISO8601DateFormatter().date(from: entry.takenAt) else { return "—" }
+        let raw = entry.takenAt
+        guard let date = Self.withFraction.date(from: raw) ?? Self.plain.date(from: raw) else { return "—" }
         return date.formatted(date: .omitted, time: .shortened)
     }
 }

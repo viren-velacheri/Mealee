@@ -175,7 +175,7 @@ final class MockAPI: MealeeAPI {
         totals[draft.playerId] = confirmed.dayTotals
         discovered[draft.playerId, default: []] += items
             .filter { freshLabels.contains($0.label) }
-            .map { Discovery(label: $0.label, thumbnailUrl: "plate_fixture.jpg") }
+            .map { Discovery(label: $0.label, thumbnailUrl: "plate_fixture.jpg", foundAt: ISO8601DateFormatter().string(from: Date())) }
         let totals = confirmed.dayTotals
         confirmedTimeline.append(TimelineEntry(
             entryId: "meal-\(mealId)",

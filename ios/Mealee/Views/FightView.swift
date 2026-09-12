@@ -59,13 +59,13 @@ struct FightView: View {
                     Notice(kind: .problem, text: message).padding(.horizontal, Layout.gutter)
                 }
 
-                if appState.opponents.count > 1 {
+                if !appState.opponents.isEmpty {
                     Button {
                         guard let any = appState.opponents.randomElement()?.playerId else { return }
-                        Haptics.tap()
+                        Haptics.success()
                         Task { await start(against: any) }
                     } label: {
-                        Label("Quick match", systemImage: "shuffle").primaryPill(filled: false)
+                        Label("Random rival", systemImage: "shuffle").primaryPill(filled: false)
                     }
                     .buttonStyle(Pressable())
                     .disabled(viewModel.isStarting)

@@ -3,7 +3,7 @@
 import json
 import random
 import uuid
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
@@ -369,7 +369,9 @@ def discoveries_payload(session: Session, player_id: str) -> dict:
     return {
         "week_start": start.isoformat(),
         "total": len(food_classes()),
-        "discovered": [{"label": r.label, "thumbnail_url": f"/uploads/{r.thumbnail_path}"} for r in rows],
+        "discovered": [{"label": r.label, "thumbnail_url": f"/uploads/{r.thumbnail_path}",
+                        "found_at": (r.found_at or datetime.combine(r.week_start, time.min)).isoformat() + "Z"}
+                       for r in rows],
     }
 
 
