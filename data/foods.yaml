@@ -1,0 +1,255 @@
+# 30 classes chosen for what is actually at the expo and in CMU dining halls.
+#
+# fdc_id values are USDA SR Legacy identifiers entered from reference and NOT yet
+# checked against data/usda.sqlite, because the FDC download host is unreachable from
+# the container these were written in. Run `make verify-foods` after the Friday night
+# USDA download. It prints every id that does not resolve and every description that
+# looks unrelated to its label. Fix those before trusting any gram number.
+#
+# height_prior_mm is the assumed depth of the item as plated, seen from above.
+# density is g/cm3 as served. mass_g = area_mm2 * height_prior_mm / 1000 * density.
+# added_sugar_share is the fraction of item mass that counts as added sugar.
+# veg is true only for actual vegetables. Fruit is deliberately excluded, because the
+# defense stat targets 400 g of vegetables and counting an apple toward it would let a
+# fruit-only day read as a well defended fighter.
+
+foods:
+  - label: pizza slice
+    fdc_id: 170035
+    height_prior_mm: 12
+    density: 0.75
+    veg: false
+    added_sugar_share: 0.01
+    caffeine_mg_per_100g: 0
+
+  - label: salad greens
+    fdc_id: 169247
+    height_prior_mm: 25
+    density: 0.20
+    veg: true
+    added_sugar_share: 0.0
+    caffeine_mg_per_100g: 0
+
+  - label: rice
+    fdc_id: 169704
+    height_prior_mm: 20
+    density: 0.85
+    veg: false
+    added_sugar_share: 0.0
+    caffeine_mg_per_100g: 0
+
+  - label: pasta
+    fdc_id: 168927
+    height_prior_mm: 20
+    density: 0.75
+    veg: false
+    added_sugar_share: 0.0
+    caffeine_mg_per_100g: 0
+
+  - label: chicken breast
+    fdc_id: 171477
+    height_prior_mm: 18
+    density: 1.05
+    veg: false
+    added_sugar_share: 0.0
+    caffeine_mg_per_100g: 0
+
+  - label: beef
+    fdc_id: 174036
+    height_prior_mm: 15
+    density: 1.05
+    veg: false
+    added_sugar_share: 0.0
+    caffeine_mg_per_100g: 0
+
+  - label: tofu
+    fdc_id: 172451
+    height_prior_mm: 20
+    density: 1.05
+    veg: false
+    added_sugar_share: 0.0
+    caffeine_mg_per_100g: 0
+
+  - label: eggs
+    fdc_id: 171287
+    height_prior_mm: 12
+    density: 1.03
+    veg: false
+    added_sugar_share: 0.0
+    caffeine_mg_per_100g: 0
+
+  - label: bread
+    fdc_id: 172686
+    height_prior_mm: 12
+    density: 0.28
+    veg: false
+    added_sugar_share: 0.04
+    caffeine_mg_per_100g: 0
+
+  - label: bagel
+    fdc_id: 174987
+    height_prior_mm: 30
+    density: 0.35
+    veg: false
+    added_sugar_share: 0.05
+    caffeine_mg_per_100g: 0
+
+  - label: fries
+    fdc_id: 170032
+    height_prior_mm: 18
+    density: 0.45
+    veg: false
+    added_sugar_share: 0.0
+    caffeine_mg_per_100g: 0
+
+  - label: burger
+    fdc_id: 170727
+    height_prior_mm: 45
+    density: 0.65
+    veg: false
+    added_sugar_share: 0.03
+    caffeine_mg_per_100g: 0
+
+  - label: sandwich
+    fdc_id: 170726
+    height_prior_mm: 35
+    density: 0.45
+    veg: false
+    added_sugar_share: 0.02
+    caffeine_mg_per_100g: 0
+
+  - label: banana
+    fdc_id: 173944
+    height_prior_mm: 30
+    density: 0.94
+    veg: false
+    added_sugar_share: 0.0
+    caffeine_mg_per_100g: 0
+
+  - label: apple
+    fdc_id: 171688
+    height_prior_mm: 55
+    density: 0.85
+    veg: false
+    added_sugar_share: 0.0
+    caffeine_mg_per_100g: 0
+
+  - label: orange
+    fdc_id: 169097
+    height_prior_mm: 60
+    density: 0.95
+    veg: false
+    added_sugar_share: 0.0
+    caffeine_mg_per_100g: 0
+
+  - label: grapes
+    fdc_id: 174683
+    height_prior_mm: 20
+    density: 0.60
+    veg: false
+    added_sugar_share: 0.0
+    caffeine_mg_per_100g: 0
+
+  - label: broccoli
+    fdc_id: 170379
+    height_prior_mm: 30
+    density: 0.35
+    veg: true
+    added_sugar_share: 0.0
+    caffeine_mg_per_100g: 0
+
+  - label: carrots
+    fdc_id: 170393
+    height_prior_mm: 12
+    density: 0.64
+    veg: true
+    added_sugar_share: 0.0
+    caffeine_mg_per_100g: 0
+
+  - label: beans
+    fdc_id: 173735
+    height_prior_mm: 15
+    density: 0.80
+    veg: true
+    added_sugar_share: 0.0
+    caffeine_mg_per_100g: 0
+
+  - label: yogurt
+    fdc_id: 171284
+    height_prior_mm: 25
+    density: 1.03
+    veg: false
+    added_sugar_share: 0.10
+    caffeine_mg_per_100g: 0
+
+  - label: cookie
+    fdc_id: 174986
+    height_prior_mm: 10
+    density: 0.60
+    veg: false
+    added_sugar_share: 0.30
+    caffeine_mg_per_100g: 2
+
+  - label: cake
+    fdc_id: 168018
+    height_prior_mm: 40
+    density: 0.45
+    veg: false
+    added_sugar_share: 0.35
+    caffeine_mg_per_100g: 2
+
+  - label: chips
+    fdc_id: 170315
+    height_prior_mm: 20
+    density: 0.15
+    veg: false
+    added_sugar_share: 0.0
+    caffeine_mg_per_100g: 0
+
+  - label: cereal
+    fdc_id: 173904
+    height_prior_mm: 25
+    density: 0.35
+    veg: false
+    added_sugar_share: 0.25
+    caffeine_mg_per_100g: 0
+
+  - label: soup
+    fdc_id: 174520
+    height_prior_mm: 30
+    density: 1.00
+    veg: false
+    added_sugar_share: 0.01
+    caffeine_mg_per_100g: 0
+
+  - label: sushi
+    fdc_id: 172922
+    height_prior_mm: 22
+    density: 0.95
+    veg: false
+    added_sugar_share: 0.02
+    caffeine_mg_per_100g: 0
+
+  - label: noodles
+    fdc_id: 168874
+    height_prior_mm: 20
+    density: 0.75
+    veg: false
+    added_sugar_share: 0.0
+    caffeine_mg_per_100g: 0
+
+  - label: cheese
+    fdc_id: 173410
+    height_prior_mm: 10
+    density: 1.05
+    veg: false
+    added_sugar_share: 0.0
+    caffeine_mg_per_100g: 0
+
+  - label: coffee
+    fdc_id: 171890
+    height_prior_mm: 60
+    density: 1.00
+    veg: false
+    added_sugar_share: 0.0
+    caffeine_mg_per_100g: 40

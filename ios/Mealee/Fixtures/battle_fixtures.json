@@ -1,0 +1,749 @@
+[
+  {
+    "fight_id": "quick-demo-001",
+    "seed": 2967037554,
+    "a": {
+      "name": "Protein Pete",
+      "attack": 68,
+      "defense": 54,
+      "stamina": 88,
+      "speed": 62,
+      "focus": 79,
+      "recovery_milli": 8200,
+      "hp_max": 188,
+      "crash_turn": null,
+      "first_strike": true
+    },
+    "b": {
+      "name": "Donut Dana",
+      "attack": 31,
+      "defense": 22,
+      "stamina": 61,
+      "speed": 91,
+      "focus": 70,
+      "recovery_milli": 4100,
+      "hp_max": 161,
+      "crash_turn": 6,
+      "first_strike": false
+    },
+    "expected": {
+      "seed": 2967037554,
+      "winner": "a",
+      "a_hp": 176,
+      "b_hp": 0,
+      "turns": [
+        {
+          "turn": 1,
+          "actor": "a",
+          "action": "hit",
+          "damage": 62,
+          "a_hp": 188,
+          "b_hp": 99,
+          "note": "Protein Pete hits for 62"
+        },
+        {
+          "turn": 1,
+          "actor": "b",
+          "action": "miss",
+          "damage": 0,
+          "a_hp": 188,
+          "b_hp": 99,
+          "note": "Donut Dana misses"
+        },
+        {
+          "turn": 1,
+          "actor": "b",
+          "action": "recover",
+          "damage": 0,
+          "a_hp": 188,
+          "b_hp": 103,
+          "note": "Donut Dana recovers 4"
+        },
+        {
+          "turn": 2,
+          "actor": "a",
+          "action": "miss",
+          "damage": 0,
+          "a_hp": 188,
+          "b_hp": 103,
+          "note": "Protein Pete misses"
+        },
+        {
+          "turn": 2,
+          "actor": "b",
+          "action": "miss",
+          "damage": 0,
+          "a_hp": 188,
+          "b_hp": 103,
+          "note": "Donut Dana misses"
+        },
+        {
+          "turn": 2,
+          "actor": "b",
+          "action": "recover",
+          "damage": 0,
+          "a_hp": 188,
+          "b_hp": 107,
+          "note": "Donut Dana recovers 4"
+        },
+        {
+          "turn": 3,
+          "actor": "a",
+          "action": "hit",
+          "damage": 66,
+          "a_hp": 188,
+          "b_hp": 41,
+          "note": "Protein Pete hits for 66"
+        },
+        {
+          "turn": 3,
+          "actor": "b",
+          "action": "hit",
+          "damage": 20,
+          "a_hp": 168,
+          "b_hp": 41,
+          "note": "Donut Dana hits for 20"
+        },
+        {
+          "turn": 3,
+          "actor": "a",
+          "action": "recover",
+          "damage": 0,
+          "a_hp": 176,
+          "b_hp": 41,
+          "note": "Protein Pete recovers 8"
+        },
+        {
+          "turn": 3,
+          "actor": "b",
+          "action": "recover",
+          "damage": 0,
+          "a_hp": 176,
+          "b_hp": 45,
+          "note": "Donut Dana recovers 4"
+        },
+        {
+          "turn": 4,
+          "actor": "a",
+          "action": "hit",
+          "damage": 56,
+          "a_hp": 176,
+          "b_hp": 0,
+          "note": "Protein Pete hits for 56"
+        }
+      ]
+    }
+  },
+  {
+    "fight_id": "quick-demo-002",
+    "seed": 2950259935,
+    "a": {
+      "name": "Donut Dana",
+      "attack": 31,
+      "defense": 22,
+      "stamina": 61,
+      "speed": 91,
+      "focus": 70,
+      "recovery_milli": 4100,
+      "hp_max": 161,
+      "crash_turn": 6,
+      "first_strike": false
+    },
+    "b": {
+      "name": "Broccoli Bo",
+      "attack": 44,
+      "defense": 97,
+      "stamina": 95,
+      "speed": 50,
+      "focus": 85,
+      "recovery_milli": 10000,
+      "hp_max": 195,
+      "crash_turn": null,
+      "first_strike": false
+    },
+    "expected": {
+      "seed": 2950259935,
+      "winner": "b",
+      "a_hp": 0,
+      "b_hp": 167,
+      "turns": [
+        {
+          "turn": 1,
+          "actor": "a",
+          "action": "hit",
+          "damage": 14,
+          "a_hp": 161,
+          "b_hp": 181,
+          "note": "Donut Dana hits for 14"
+        },
+        {
+          "turn": 1,
+          "actor": "b",
+          "action": "miss",
+          "damage": 0,
+          "a_hp": 161,
+          "b_hp": 181,
+          "note": "Broccoli Bo misses"
+        },
+        {
+          "turn": 1,
+          "actor": "b",
+          "action": "recover",
+          "damage": 0,
+          "a_hp": 161,
+          "b_hp": 191,
+          "note": "Broccoli Bo recovers 10"
+        },
+        {
+          "turn": 2,
+          "actor": "a",
+          "action": "miss",
+          "damage": 0,
+          "a_hp": 161,
+          "b_hp": 191,
+          "note": "Donut Dana misses"
+        },
+        {
+          "turn": 2,
+          "actor": "b",
+          "action": "hit",
+          "damage": 35,
+          "a_hp": 126,
+          "b_hp": 191,
+          "note": "Broccoli Bo hits for 35"
+        },
+        {
+          "turn": 2,
+          "actor": "a",
+          "action": "recover",
+          "damage": 0,
+          "a_hp": 130,
+          "b_hp": 191,
+          "note": "Donut Dana recovers 4"
+        },
+        {
+          "turn": 2,
+          "actor": "b",
+          "action": "recover",
+          "damage": 0,
+          "a_hp": 130,
+          "b_hp": 195,
+          "note": "Broccoli Bo recovers 4"
+        },
+        {
+          "turn": 3,
+          "actor": "a",
+          "action": "hit",
+          "damage": 14,
+          "a_hp": 130,
+          "b_hp": 181,
+          "note": "Donut Dana hits for 14"
+        },
+        {
+          "turn": 3,
+          "actor": "b",
+          "action": "hit",
+          "damage": 44,
+          "a_hp": 87,
+          "b_hp": 181,
+          "note": "Broccoli Bo hits for 44"
+        },
+        {
+          "turn": 3,
+          "actor": "a",
+          "action": "recover",
+          "damage": 0,
+          "a_hp": 91,
+          "b_hp": 181,
+          "note": "Donut Dana recovers 4"
+        },
+        {
+          "turn": 3,
+          "actor": "b",
+          "action": "recover",
+          "damage": 0,
+          "a_hp": 91,
+          "b_hp": 191,
+          "note": "Broccoli Bo recovers 10"
+        },
+        {
+          "turn": 4,
+          "actor": "a",
+          "action": "hit",
+          "damage": 14,
+          "a_hp": 91,
+          "b_hp": 178,
+          "note": "Donut Dana hits for 14"
+        },
+        {
+          "turn": 4,
+          "actor": "b",
+          "action": "hit",
+          "damage": 44,
+          "a_hp": 47,
+          "b_hp": 178,
+          "note": "Broccoli Bo hits for 44"
+        },
+        {
+          "turn": 4,
+          "actor": "a",
+          "action": "recover",
+          "damage": 0,
+          "a_hp": 51,
+          "b_hp": 178,
+          "note": "Donut Dana recovers 4"
+        },
+        {
+          "turn": 4,
+          "actor": "b",
+          "action": "recover",
+          "damage": 0,
+          "a_hp": 51,
+          "b_hp": 188,
+          "note": "Broccoli Bo recovers 10"
+        },
+        {
+          "turn": 5,
+          "actor": "a",
+          "action": "hit",
+          "damage": 14,
+          "a_hp": 51,
+          "b_hp": 174,
+          "note": "Donut Dana hits for 14"
+        },
+        {
+          "turn": 5,
+          "actor": "b",
+          "action": "hit",
+          "damage": 44,
+          "a_hp": 7,
+          "b_hp": 174,
+          "note": "Broccoli Bo hits for 44"
+        },
+        {
+          "turn": 5,
+          "actor": "a",
+          "action": "recover",
+          "damage": 0,
+          "a_hp": 11,
+          "b_hp": 174,
+          "note": "Donut Dana recovers 4"
+        },
+        {
+          "turn": 5,
+          "actor": "b",
+          "action": "recover",
+          "damage": 0,
+          "a_hp": 11,
+          "b_hp": 184,
+          "note": "Broccoli Bo recovers 10"
+        },
+        {
+          "turn": 6,
+          "actor": "a",
+          "action": "crash",
+          "damage": 0,
+          "a_hp": 11,
+          "b_hp": 184,
+          "note": "Sugar crash: speed halved to 45"
+        },
+        {
+          "turn": 6,
+          "actor": "a",
+          "action": "hit",
+          "damage": 17,
+          "a_hp": 11,
+          "b_hp": 167,
+          "note": "Donut Dana hits for 17"
+        },
+        {
+          "turn": 6,
+          "actor": "b",
+          "action": "hit",
+          "damage": 35,
+          "a_hp": 0,
+          "b_hp": 167,
+          "note": "Broccoli Bo hits for 35"
+        }
+      ]
+    }
+  },
+  {
+    "fight_id": "nightly-2026-09-12-a",
+    "seed": 744262745,
+    "a": {
+      "name": "Broccoli Bo",
+      "attack": 44,
+      "defense": 97,
+      "stamina": 95,
+      "speed": 50,
+      "focus": 85,
+      "recovery_milli": 10000,
+      "hp_max": 195,
+      "crash_turn": null,
+      "first_strike": false
+    },
+    "b": {
+      "name": "Protein Pete",
+      "attack": 68,
+      "defense": 54,
+      "stamina": 88,
+      "speed": 62,
+      "focus": 79,
+      "recovery_milli": 8200,
+      "hp_max": 188,
+      "crash_turn": null,
+      "first_strike": true
+    },
+    "expected": {
+      "seed": 744262745,
+      "winner": "a",
+      "a_hp": 15,
+      "b_hp": 0,
+      "turns": [
+        {
+          "turn": 1,
+          "actor": "b",
+          "action": "hit",
+          "damage": 34,
+          "a_hp": 161,
+          "b_hp": 188,
+          "note": "Protein Pete hits for 34"
+        },
+        {
+          "turn": 1,
+          "actor": "a",
+          "action": "hit",
+          "damage": 30,
+          "a_hp": 161,
+          "b_hp": 158,
+          "note": "Broccoli Bo hits for 30"
+        },
+        {
+          "turn": 1,
+          "actor": "a",
+          "action": "recover",
+          "damage": 0,
+          "a_hp": 171,
+          "b_hp": 158,
+          "note": "Broccoli Bo recovers 10"
+        },
+        {
+          "turn": 1,
+          "actor": "b",
+          "action": "recover",
+          "damage": 0,
+          "a_hp": 171,
+          "b_hp": 166,
+          "note": "Protein Pete recovers 8"
+        },
+        {
+          "turn": 2,
+          "actor": "b",
+          "action": "hit",
+          "damage": 33,
+          "a_hp": 138,
+          "b_hp": 166,
+          "note": "Protein Pete hits for 33"
+        },
+        {
+          "turn": 2,
+          "actor": "a",
+          "action": "hit",
+          "damage": 35,
+          "a_hp": 138,
+          "b_hp": 131,
+          "note": "Broccoli Bo hits for 35"
+        },
+        {
+          "turn": 2,
+          "actor": "a",
+          "action": "recover",
+          "damage": 0,
+          "a_hp": 148,
+          "b_hp": 131,
+          "note": "Broccoli Bo recovers 10"
+        },
+        {
+          "turn": 2,
+          "actor": "b",
+          "action": "recover",
+          "damage": 0,
+          "a_hp": 148,
+          "b_hp": 140,
+          "note": "Protein Pete recovers 8"
+        },
+        {
+          "turn": 3,
+          "actor": "b",
+          "action": "hit",
+          "damage": 32,
+          "a_hp": 116,
+          "b_hp": 140,
+          "note": "Protein Pete hits for 32"
+        },
+        {
+          "turn": 3,
+          "actor": "a",
+          "action": "hit",
+          "damage": 28,
+          "a_hp": 116,
+          "b_hp": 112,
+          "note": "Broccoli Bo hits for 28"
+        },
+        {
+          "turn": 3,
+          "actor": "a",
+          "action": "recover",
+          "damage": 0,
+          "a_hp": 126,
+          "b_hp": 112,
+          "note": "Broccoli Bo recovers 10"
+        },
+        {
+          "turn": 3,
+          "actor": "b",
+          "action": "recover",
+          "damage": 0,
+          "a_hp": 126,
+          "b_hp": 120,
+          "note": "Protein Pete recovers 8"
+        },
+        {
+          "turn": 4,
+          "actor": "b",
+          "action": "hit",
+          "damage": 34,
+          "a_hp": 92,
+          "b_hp": 120,
+          "note": "Protein Pete hits for 34"
+        },
+        {
+          "turn": 4,
+          "actor": "a",
+          "action": "hit",
+          "damage": 29,
+          "a_hp": 92,
+          "b_hp": 92,
+          "note": "Broccoli Bo hits for 29"
+        },
+        {
+          "turn": 4,
+          "actor": "a",
+          "action": "recover",
+          "damage": 0,
+          "a_hp": 102,
+          "b_hp": 92,
+          "note": "Broccoli Bo recovers 10"
+        },
+        {
+          "turn": 4,
+          "actor": "b",
+          "action": "recover",
+          "damage": 0,
+          "a_hp": 102,
+          "b_hp": 100,
+          "note": "Protein Pete recovers 8"
+        },
+        {
+          "turn": 5,
+          "actor": "b",
+          "action": "hit",
+          "damage": 30,
+          "a_hp": 72,
+          "b_hp": 100,
+          "note": "Protein Pete hits for 30"
+        },
+        {
+          "turn": 5,
+          "actor": "a",
+          "action": "hit",
+          "damage": 36,
+          "a_hp": 72,
+          "b_hp": 63,
+          "note": "Broccoli Bo hits for 36"
+        },
+        {
+          "turn": 5,
+          "actor": "a",
+          "action": "recover",
+          "damage": 0,
+          "a_hp": 82,
+          "b_hp": 63,
+          "note": "Broccoli Bo recovers 10"
+        },
+        {
+          "turn": 5,
+          "actor": "b",
+          "action": "recover",
+          "damage": 0,
+          "a_hp": 82,
+          "b_hp": 72,
+          "note": "Protein Pete recovers 8"
+        },
+        {
+          "turn": 6,
+          "actor": "b",
+          "action": "miss",
+          "damage": 0,
+          "a_hp": 82,
+          "b_hp": 72,
+          "note": "Protein Pete misses"
+        },
+        {
+          "turn": 6,
+          "actor": "a",
+          "action": "hit",
+          "damage": 29,
+          "a_hp": 82,
+          "b_hp": 43,
+          "note": "Broccoli Bo hits for 29"
+        },
+        {
+          "turn": 6,
+          "actor": "a",
+          "action": "recover",
+          "damage": 0,
+          "a_hp": 92,
+          "b_hp": 43,
+          "note": "Broccoli Bo recovers 10"
+        },
+        {
+          "turn": 6,
+          "actor": "b",
+          "action": "recover",
+          "damage": 0,
+          "a_hp": 92,
+          "b_hp": 51,
+          "note": "Protein Pete recovers 8"
+        },
+        {
+          "turn": 7,
+          "actor": "b",
+          "action": "hit",
+          "damage": 34,
+          "a_hp": 58,
+          "b_hp": 51,
+          "note": "Protein Pete hits for 34"
+        },
+        {
+          "turn": 7,
+          "actor": "a",
+          "action": "miss",
+          "damage": 0,
+          "a_hp": 58,
+          "b_hp": 51,
+          "note": "Broccoli Bo misses"
+        },
+        {
+          "turn": 7,
+          "actor": "a",
+          "action": "recover",
+          "damage": 0,
+          "a_hp": 68,
+          "b_hp": 51,
+          "note": "Broccoli Bo recovers 10"
+        },
+        {
+          "turn": 7,
+          "actor": "b",
+          "action": "recover",
+          "damage": 0,
+          "a_hp": 68,
+          "b_hp": 59,
+          "note": "Protein Pete recovers 8"
+        },
+        {
+          "turn": 8,
+          "actor": "b",
+          "action": "hit",
+          "damage": 33,
+          "a_hp": 35,
+          "b_hp": 59,
+          "note": "Protein Pete hits for 33"
+        },
+        {
+          "turn": 8,
+          "actor": "a",
+          "action": "hit",
+          "damage": 31,
+          "a_hp": 35,
+          "b_hp": 29,
+          "note": "Broccoli Bo hits for 31"
+        },
+        {
+          "turn": 8,
+          "actor": "a",
+          "action": "recover",
+          "damage": 0,
+          "a_hp": 45,
+          "b_hp": 29,
+          "note": "Broccoli Bo recovers 10"
+        },
+        {
+          "turn": 8,
+          "actor": "b",
+          "action": "recover",
+          "damage": 0,
+          "a_hp": 45,
+          "b_hp": 37,
+          "note": "Protein Pete recovers 8"
+        },
+        {
+          "turn": 9,
+          "actor": "b",
+          "action": "hit",
+          "damage": 39,
+          "a_hp": 5,
+          "b_hp": 37,
+          "note": "Protein Pete hits for 39"
+        },
+        {
+          "turn": 9,
+          "actor": "a",
+          "action": "hit",
+          "damage": 32,
+          "a_hp": 5,
+          "b_hp": 4,
+          "note": "Broccoli Bo hits for 32"
+        },
+        {
+          "turn": 9,
+          "actor": "a",
+          "action": "recover",
+          "damage": 0,
+          "a_hp": 15,
+          "b_hp": 4,
+          "note": "Broccoli Bo recovers 10"
+        },
+        {
+          "turn": 9,
+          "actor": "b",
+          "action": "recover",
+          "damage": 0,
+          "a_hp": 15,
+          "b_hp": 13,
+          "note": "Protein Pete recovers 8"
+        },
+        {
+          "turn": 10,
+          "actor": "b",
+          "action": "miss",
+          "damage": 0,
+          "a_hp": 15,
+          "b_hp": 13,
+          "note": "Protein Pete misses"
+        },
+        {
+          "turn": 10,
+          "actor": "a",
+          "action": "hit",
+          "damage": 33,
+          "a_hp": 15,
+          "b_hp": 0,
+          "note": "Broccoli Bo hits for 33"
+        }
+      ]
+    }
+  }
+]
