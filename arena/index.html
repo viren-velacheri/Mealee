@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mealee Arena</title>
+<style>
+  :root {
+    --bg: #0b0d12; --panel: #151923; --line: #262c3a; --text: #f2f4f8; --muted: #8b93a7;
+    --a: #ff7a45; --b: #4da3ff; --hp: #3ddc84; --hp-low: #ff4d4f; --accent: #ffd166;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--bg); color: var(--text);
+    font-family: -apple-system, "SF Pro Display", Inter, system-ui, sans-serif; overflow: hidden; }
+  body { display: grid; grid-template-rows: auto 1fr auto; padding: 24px 32px; gap: 20px; }
+  header { display: flex; justify-content: space-between; align-items: baseline; }
+  header h1 { font-size: 32px; letter-spacing: -0.02em; }
+  header .code { font-size: 44px; font-weight: 800; letter-spacing: 0.18em; color: var(--accent); }
+  header .status { font-size: 16px; color: var(--muted); }
+  main { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 20px; min-height: 0; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 24px; min-height: 0; }
+  .fighter { display: flex; flex-direction: column; gap: 14px; }
+  .fighter .emoji { font-size: 96px; line-height: 1; text-align: center; transition: transform .15s; }
+  .fighter.hit .emoji { transform: translateX(-14px) rotate(-8deg); }
+  .fighter.crash .emoji { filter: grayscale(1); transform: scale(.9); }
+  .fighter .name { font-size: 30px; font-weight: 700; text-align: center; }
+  .fighter.side-a .name { color: var(--a); } .fighter.side-b .name { color: var(--b); }
+  .hpwrap { height: 26px; background: #0f1218; border-radius: 13px; overflow: hidden; border: 1px solid var(--line); }
+  .hp { height: 100%; width: 100%; background: var(--hp); transition: width .35s ease-out, background .3s; }
+  .hp.low { background: var(--hp-low); }
+  .hpnum { font-size: 22px; font-variant-numeric: tabular-nums; text-align: center; color: var(--muted); }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; font-size: 18px; }
+  .stats div { display: flex; justify-content: space-between; border-bottom: 1px dashed var(--line); padding: 4px 0; }
+  .stats b { font-variant-numeric: tabular-nums; }
+  .stats .tag { color: var(--accent); font-size: 15px; }
+  .centre { display: flex; flex-direction: column; gap: 16px; min-height: 0; }
+  .callout { text-align: center; font-size: 40px; font-weight: 800; min-height: 60px; letter-spacing: -0.01em; }
+  .callout.crash { color: var(--accent); }
+  .callout.ko { color: var(--hp-low); font-size: 64px; }
+  .callout.win { color: var(--hp); font-size: 56px; }
+  .log { flex: 1; overflow-y: auto; font-size: 20px; line-height: 1.55; font-variant-numeric: tabular-nums; }
+  .log div { padding: 4px 10px; border-left: 4px solid transparent; }
+  .log .a { border-color: var(--a); } .log .b { border-color: var(--b); }
+  .log .turn { color: var(--muted); display: inline-block; width: 52px; }
+  .log .latest { background: #1c2230; }
+  .standings { display: flex; flex-direction: column; gap: 10px; }
+  .standings h2 { font-size: 20px; color: var(--muted); text-transform: uppercase; letter-spacing: .12em; }
+  .standings .row { display: grid; grid-template-columns: 34px 44px 1fr auto; align-items: center; gap: 10px; font-size: 22px; }
+  .standings .row .rank { color: var(--muted); }
+  .standings .row .wins { font-weight: 700; }
+  .standings .row small { color: var(--muted); font-size: 15px; margin-left: 6px; }
+  .tonight { margin-top: 16px; font-size: 18px; color: var(--muted); }
+  .tonight div { padding: 3px 0; }
+  footer { font-size: 15px; color: var(--muted); display: flex; justify-content: space-between; }
+  .empty { text-align: center; color: var(--muted); font-size: 26px; margin-top: 30vh; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Mealee <span style="color:var(--muted);font-weight:400">arena</span></h1>
+  <div class="code" id="code">····</div>
+  <div class="status" id="status">connecting</div>
+</header>
+<main>
+  <section class="card fighter side-a" id="fa">
+    <div class="emoji">🍽️</div><div class="name">waiting</div>
+    <div class="hpwrap"><div class="hp"></div></div><div class="hpnum">—</div>
+    <div class="stats"></div>
+  </section>
+  <section class="card centre">
+    <div class="callout" id="callout">Waiting for a fight</div>
+    <div class="log" id="log"><div class="empty">Tap Quick match on a phone</div></div>
+  </section>
+  <aside class="card standings">
+    <h2>Standings this week</h2>
+    <div id="standings"></div>
+    <div class="tonight" id="tonight"></div>
+    <section class="card fighter side-b" id="fb" style="margin-top:auto;padding:16px">
+      <div class="emoji">🍽️</div><div class="name">waiting</div>
+      <div class="hpwrap"><div class="hp"></div></div><div class="hpnum">—</div>
+      <div class="stats"></div>
+    </section>
+  </aside>
+</main>
+<footer><span id="league">league</span><span id="mode">websocket</span></footer>
+
+<script>
+(() => {
+  const code = location.pathname.split('/').filter(Boolean).pop().toUpperCase();
+  document.getElementById('code').textContent = code;
+  const $ = id => document.getElementById(id);
+  const status = text => $('status').textContent = text;
+
+  let currentFightId = null;
+  let playToken = 0;
+  let socket = null;
+  let pollTimer = null;
+
+  const statRows = f => `
+    <div><span>Attack</span><b>${f.attack}</b></div>
+    <div><span>Defense</span><b>${f.defense}</b></div>
+    <div><span>Speed</span><b>${f.speed}</b></div>
+    <div><span>Focus</span><b>${f.focus}</b></div>
+    <div><span>Recover</span><b>${(f.recovery_milli / 1000).toFixed(1)}/t</b></div>
+    <div><span>HP</span><b>${f.hp_max}</b></div>
+    ${f.first_strike ? '<div class="tag">first strike</div>' : ''}
+    ${f.crash_turn ? `<div class="tag">crash on turn ${f.crash_turn}</div>` : ''}`;
+
+  function setFighter(id, f, hp) {
+    const el = $(id);
+    el.querySelector('.emoji').textContent = f.emoji;
+    el.querySelector('.name').textContent = f.name;
+    el.querySelector('.stats').innerHTML = statRows(f);
+    setHP(id, hp, f.hp_max);
+  }
+
+  function setHP(id, hp, max) {
+    const el = $(id);
+    const bar = el.querySelector('.hp');
+    bar.style.width = Math.max(0, 100 * hp / max) + '%';
+    bar.classList.toggle('low', hp / max < 0.3);
+    el.querySelector('.hpnum').textContent = `${hp} / ${max}`;
+  }
+
+  function flash(id, cls) {
+    const el = $(id);
+    el.classList.add(cls);
+    setTimeout(() => el.classList.remove(cls), 220);
+  }
+
+  async function playFight(fight) {
+    const token = ++playToken;
+    currentFightId = fight.fight_id;
+    setFighter('fa', fight.a, fight.a.hp_max);
+    setFighter('fb', fight.b, fight.b.hp_max);
+    $('fa').classList.remove('crash'); $('fb').classList.remove('crash');
+    $('log').innerHTML = '';
+    $('callout').className = 'callout';
+    $('callout').textContent = `${fight.a.name} vs ${fight.b.name}`;
+    const interval = Math.min(900, Math.max(250, 20000 / Math.max(1, fight.turns.length)));
+
+    for (const t of fight.turns) {
+      if (token !== playToken) return;
+      await new Promise(r => setTimeout(r, interval));
+      if (token !== playToken) return;
+      const row = document.createElement('div');
+      row.className = t.actor;
+      row.innerHTML = `<span class="turn">t${t.turn}</span>${t.note}`;
+      $('log').querySelectorAll('.latest').forEach(n => n.classList.remove('latest'));
+      row.classList.add('latest');
+      $('log').appendChild(row);
+      $('log').scrollTop = $('log').scrollHeight;
+      setHP('fa', t.a_hp, fight.a.hp_max);
+      setHP('fb', t.b_hp, fight.b.hp_max);
+      const target = t.actor === 'a' ? 'fb' : 'fa';
+      if (t.action === 'hit') { flash(target, 'hit'); $('callout').className = 'callout'; $('callout').textContent = `${t.damage} damage`; }
+      if (t.action === 'miss') { $('callout').className = 'callout'; $('callout').textContent = 'miss'; }
+      if (t.action === 'crash') { $(t.actor === 'a' ? 'fa' : 'fb').classList.add('crash'); $('callout').className = 'callout crash'; $('callout').textContent = 'Sugar crash: speed halved'; }
+      if (t.action === 'recover') { $('callout').className = 'callout'; $('callout').textContent = t.note; }
+    }
+    if (token !== playToken) return;
+    const winner = fight.winner_id === fight.a.player_id ? fight.a : fight.b;
+    $('callout').className = 'callout win';
+    $('callout').textContent = `${winner.emoji} ${winner.name} wins`;
+    loadLeague();
+  }
+
+  async function loadLeague() {
+    const res = await fetch(`/leagues/${code}`);
+    if (!res.ok) { status('unknown league'); return; }
+    const league = await res.json();
+    $('league').textContent = `${league.name} · week of ${league.week_start}`;
+    $('standings').innerHTML = league.standings.map(s =>
+      `<div class="row"><span class="rank">${s.rank}</span><span>${s.emoji}</span><span>${s.name}</span><span class="wins">${s.wins}W<small>${s.damage} dmg</small></span></div>`).join('');
+    $('tonight').innerHTML = '<div>Tonight at 9pm</div>' + league.tonight.map(m =>
+      `<div>${m.a.emoji} ${m.a.name} vs ${m.b ? m.b.emoji + ' ' + m.b.name : 'bye'}</div>`).join('');
+  }
+
+  async function loadLatest() {
+    const res = await fetch(`/leagues/${code}/latest-fight`);
+    if (!res.ok) return;
+    const fight = await res.json();
+    if (fight.fight_id !== currentFightId) playFight(fight);
+  }
+
+  function startPolling() {
+    if (pollTimer) return;
+    $('mode').textContent = 'polling every 2s';
+    pollTimer = setInterval(loadLatest, 2000);
+  }
+
+  function connectSocket() {
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    socket = new WebSocket(`${proto}://${location.host}/ws/league/${code}`);
+    let ping = null;
+    socket.onopen = () => { status('live'); $('mode').textContent = 'websocket'; ping = setInterval(() => socket.send('ping'), 15000); };
+    socket.onmessage = ev => {
+      const msg = JSON.parse(ev.data);
+      if (msg.type === 'fight_ended' && msg.fight.fight_id !== currentFightId) playFight(msg.fight);
+      if (msg.type === 'fighter_update') loadLeague();
+    };
+    socket.onclose = () => { status('reconnecting'); clearInterval(ping); startPolling(); setTimeout(connectSocket, 5000); };
+    socket.onerror = () => socket.close();
+  }
+
+  loadLeague();
+  loadLatest();
+  connectSocket();
+})();
+</script>
+</body>
+</html>

@@ -28,3 +28,23 @@ One line per non-obvious choice: what was chosen over what, and why.
   the scan animation, and raw masks run to hundreds of points.
 - Vision fallback has a 1.5 s timeout and is skipped on expiry, keeping the YOLO label: the
   4 s budget is the demo, one unlabelled region is not.
+- XcodeGen `project.yml` over a hand-written pbxproj: a pbxproj written blind with an SPM
+  dependency is the likeliest thing to be broken on first open. Commit the generated
+  project after the first `xcodegen generate` so teammates never need the tool.
+- Fruit is not counted as vegetables for defense: the target is 400 g of vegetables and an
+  apple-only day should not read as well defended. Beans count.
+- Standings count quick matches as well as nightly fights: a quick match at the expo should
+  move the projector standings immediately, and nobody at a hackathon farms wins.
+- Minimum mask size is 1% of the image, not 1% of the plate: plate detection is another
+  detector to get wrong, and the intent is only to drop crumbs.
+- `nutrients_fallback.yaml` ships alongside `foods.yaml`: USDA cannot be downloaded from the
+  build container, and a failed Friday download must not take the meal path down. The
+  server warns on every start it runs without `usda.sqlite`.
+- Home shows weekly wins rather than a daily win/loss record: the API reports wins per week
+  in standings and nothing per day, and adding a per-day endpoint is a feature not asked for.
+- Fixtures for `MockAPI` are captured from the real server (`tools/make_ios_fixtures.py`)
+  rather than typed: the phone then decodes exactly what the server sends.
+- Combat stats are truncated with `int(x + 0.5)` on both sides, never `round()`: Python
+  rounds half to even and Swift rounds half away from zero.
+- Empty error handling on `/meals` narrowed to unreadable images: a missing dependency or a
+  bug in the CV path surfaces as a 500 in the log rather than a "bad photo" hint to the player.

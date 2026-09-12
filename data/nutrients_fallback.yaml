@@ -1,0 +1,34 @@
+# Per 100 g, used ONLY when data/usda.sqlite is absent. The server logs a loud warning
+# on every start it runs without USDA data. Values are typical figures for the class,
+# good enough to keep the demo alive if the Friday download fails, not a substitute.
+#   kcal, protein_g, fiber_g, sodium_mg, caffeine_mg
+pizza slice:    {kcal: 266, protein_g: 11.0, fiber_g: 2.3, sodium_mg: 598, caffeine_mg: 0}
+salad greens:   {kcal: 17,  protein_g: 1.2,  fiber_g: 2.1, sodium_mg: 8,   caffeine_mg: 0}
+rice:           {kcal: 130, protein_g: 2.7,  fiber_g: 0.4, sodium_mg: 1,   caffeine_mg: 0}
+pasta:          {kcal: 158, protein_g: 5.8,  fiber_g: 1.8, sodium_mg: 1,   caffeine_mg: 0}
+chicken breast: {kcal: 165, protein_g: 31.0, fiber_g: 0.0, sodium_mg: 74,  caffeine_mg: 0}
+beef:           {kcal: 250, protein_g: 26.0, fiber_g: 0.0, sodium_mg: 72,  caffeine_mg: 0}
+tofu:           {kcal: 144, protein_g: 17.0, fiber_g: 2.3, sodium_mg: 14,  caffeine_mg: 0}
+eggs:           {kcal: 155, protein_g: 13.0, fiber_g: 0.0, sodium_mg: 124, caffeine_mg: 0}
+bread:          {kcal: 265, protein_g: 9.0,  fiber_g: 2.7, sodium_mg: 491, caffeine_mg: 0}
+bagel:          {kcal: 250, protein_g: 10.0, fiber_g: 2.1, sodium_mg: 430, caffeine_mg: 0}
+fries:          {kcal: 312, protein_g: 3.4,  fiber_g: 3.8, sodium_mg: 210, caffeine_mg: 0}
+burger:         {kcal: 295, protein_g: 17.0, fiber_g: 1.1, sodium_mg: 414, caffeine_mg: 0}
+sandwich:       {kcal: 250, protein_g: 12.0, fiber_g: 2.0, sodium_mg: 550, caffeine_mg: 0}
+banana:         {kcal: 89,  protein_g: 1.1,  fiber_g: 2.6, sodium_mg: 1,   caffeine_mg: 0}
+apple:          {kcal: 52,  protein_g: 0.3,  fiber_g: 2.4, sodium_mg: 1,   caffeine_mg: 0}
+orange:         {kcal: 47,  protein_g: 0.9,  fiber_g: 2.4, sodium_mg: 0,   caffeine_mg: 0}
+grapes:         {kcal: 69,  protein_g: 0.7,  fiber_g: 0.9, sodium_mg: 2,   caffeine_mg: 0}
+broccoli:       {kcal: 34,  protein_g: 2.8,  fiber_g: 2.6, sodium_mg: 33,  caffeine_mg: 0}
+carrots:        {kcal: 41,  protein_g: 0.9,  fiber_g: 2.8, sodium_mg: 69,  caffeine_mg: 0}
+beans:          {kcal: 132, protein_g: 8.9,  fiber_g: 8.7, sodium_mg: 2,   caffeine_mg: 0}
+yogurt:         {kcal: 63,  protein_g: 5.3,  fiber_g: 0.0, sodium_mg: 70,  caffeine_mg: 0}
+cookie:         {kcal: 488, protein_g: 5.5,  fiber_g: 2.0, sodium_mg: 340, caffeine_mg: 2}
+cake:           {kcal: 371, protein_g: 5.0,  fiber_g: 1.8, sodium_mg: 300, caffeine_mg: 2}
+chips:          {kcal: 536, protein_g: 7.0,  fiber_g: 4.8, sodium_mg: 525, caffeine_mg: 0}
+cereal:         {kcal: 357, protein_g: 7.5,  fiber_g: 3.0, sodium_mg: 660, caffeine_mg: 0}
+soup:           {kcal: 36,  protein_g: 1.9,  fiber_g: 0.6, sodium_mg: 340, caffeine_mg: 0}
+sushi:          {kcal: 143, protein_g: 6.0,  fiber_g: 0.9, sodium_mg: 350, caffeine_mg: 0}
+noodles:        {kcal: 138, protein_g: 4.5,  fiber_g: 1.2, sodium_mg: 5,   caffeine_mg: 0}
+cheese:         {kcal: 403, protein_g: 25.0, fiber_g: 0.0, sodium_mg: 621, caffeine_mg: 0}
+coffee:         {kcal: 1,   protein_g: 0.1,  fiber_g: 0.0, sodium_mg: 2,   caffeine_mg: 40}
