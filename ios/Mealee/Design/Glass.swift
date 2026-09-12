@@ -82,8 +82,6 @@ struct LiquidModifier: ViewModifier, Animatable {
 
     func body(content: Content) -> some View {
         content
-            .distortionEffect(ShaderLibrary.ripple(.float(Float(1 - progress)), .boundingRect, .float(Float(16 * progress))),
-                              maxSampleOffset: CGSize(width: 24, height: 24))
             .scaleEffect(1 - 0.05 * progress)
             .blur(radius: 8 * progress)
             .opacity(1 - progress)

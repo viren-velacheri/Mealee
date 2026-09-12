@@ -87,3 +87,8 @@ One line per non-obvious choice: what was chosen over what, and why.
 - Fight starts by swiping the chosen rival up into the ring, with a button as the fallback:
   the gesture is the delight, the button is the guarantee.
 - Rounded SF for anything that carries weight, plain SF for body: one family, two voices.
+- The liquid transition keeps scale, blur and opacity but drops its ripple
+  distortionEffect: a Metal distortion cannot rasterize a subtree holding TextFields,
+  ScrollViews, a TabView or .ultraThinMaterial, so on device SwiftUI drew its shader
+  failure placeholder (yellow field, red prohibitory sign) over every screen. Shader
+  effects now only wrap plain shapes and images, where they work.
