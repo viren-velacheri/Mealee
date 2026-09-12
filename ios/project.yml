@@ -36,6 +36,9 @@ targets:
         CFBundleDisplayName: Mealee
         NSCameraUsageDescription: Mealee photographs your plate to measure your meal.
         NSPhotoLibraryUsageDescription: Pick a plate photo if the camera is unavailable.
+        NSLocalNetworkUsageDescription: Mealee connects to the development server on your local network.
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
         API_BASE_URL: $(API_BASE_URL)
         AUTH0_ENABLED: $(AUTH0_ENABLED)
         UILaunchScreen: {}
@@ -51,3 +54,16 @@ targets:
         buildPhase: resources
     dependencies:
       - target: Mealee
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+  MealeeUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: MealeeUITests
+    dependencies:
+      - target: Mealee
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES

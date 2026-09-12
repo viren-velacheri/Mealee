@@ -14,5 +14,7 @@ xcuserdata/
 *.xcuserstate
 build/
 DerivedData/
+ios/Mealee.xcodeproj/
+ios/Mealee/Info.plist
 ios/Mealee/Resources/Auth0.plist
 Config.xcconfig

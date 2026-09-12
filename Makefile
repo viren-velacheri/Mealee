@@ -1,7 +1,7 @@
 .PHONY: install dev seed test verify-foods usda spikes swift-test
 
 install:
-	cd server && uv sync
+	cd server && uv sync --extra dev
 
 dev:
 	cd server && uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload

@@ -8,6 +8,8 @@ protocol MealeeAPI: AnyObject {
     func league(code: String) async throws -> LeagueResponse
     func uploadMeal(playerId: String, jpeg: Data) async throws -> MealResponse
     func relabel(mealId: String, itemId: String, label: String) async throws -> MealResponse
+    func confirmMeal(mealId: String) async throws -> MealResponse
+    func discardMeal(mealId: String) async throws
     func intake(playerId: String, kind: String) async throws -> IntakeResponse
     func fighterToday(playerId: String) async throws -> FighterStats
     func startFight(aPlayerId: String, bPlayerId: String) async throws -> FightResponse

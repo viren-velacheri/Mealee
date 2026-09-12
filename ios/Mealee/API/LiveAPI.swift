@@ -68,6 +68,16 @@ final class LiveAPI: MealeeAPI {
         return try await send(try request("/meals/\(mealId)/items/\(itemId)", method: "PATCH", body: Body(label: label)))
     }
 
+    func confirmMeal(mealId: String) async throws -> MealResponse {
+        try await send(try request("/meals/\(mealId)/confirm", method: "POST"))
+    }
+
+    func discardMeal(mealId: String) async throws {
+        struct Reply: Decodable { let ok: Bool }
+        let reply: Reply = try await send(try request("/meals/\(mealId)", method: "DELETE"))
+        guard reply.ok else { throw APIError(error: "discard failed", hint: "Try again.") }
+    }
+
     func intake(playerId: String, kind: String) async throws -> IntakeResponse {
         struct Body: Encodable { let playerId: String; let kind: String }
         return try await send(try request("/intake", method: "POST", body: Body(playerId: playerId, kind: kind)))

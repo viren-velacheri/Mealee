@@ -3,16 +3,44 @@ import SwiftUI
 struct MealReviewView: View {
     @Environment(AppState.self) private var appState
     @State private var viewModel: MealReviewViewModel
+    let fighterBefore: FighterStats
+    let onRetake: () -> Void
+    let onCancel: () -> Void
     let onDone: () -> Void
 
-    init(meal: MealResponse, image: UIImage, onDone: @escaping () -> Void) {
+    init(meal: MealResponse, image: UIImage, fighterBefore: FighterStats,
+         onRetake: @escaping () -> Void,
+         onCancel: @escaping () -> Void, onDone: @escaping () -> Void) {
         _viewModel = State(initialValue: MealReviewViewModel(meal: meal, image: image))
+        self.fighterBefore = fighterBefore
+        self.onRetake = onRetake
+        self.onCancel = onCancel
         self.onDone = onDone
     }
 
     var body: some View {
         @Bindable var viewModel = viewModel
         VStack(spacing: 0) {
+            HStack {
+                Button("Cancel", role: .cancel) {
+                    Task {
+                        if await viewModel.discard(using: appState.api) { onCancel() }
+                    }
+                }
+                Spacer()
+                Button {
+                    Task {
+                        if await viewModel.discard(using: appState.api) { onRetake() }
+                    }
+                } label: {
+                    Label("Retake", systemImage: "camera.rotate")
+                }
+            }
+            .padding(.horizontal).padding(.top, 8)
+            .disabled(viewModel.isBusy)
+            if let message = viewModel.errorMessage {
+                Text(message).foregroundStyle(.red).font(.footnote).padding(.horizontal)
+            }
             ScanAnimationView(meal: viewModel.meal, image: viewModel.image, phase: $viewModel.scanPhase)
                 .aspectRatio(CGFloat(viewModel.meal.imageW) / CGFloat(viewModel.meal.imageH), contentMode: .fit)
                 .clipShape(RoundedRectangle(cornerRadius: 16))
@@ -26,12 +54,15 @@ struct MealReviewView: View {
             }
         }
         .background(Color(white: 0.04).ignoresSafeArea())
+        .overlay { if viewModel.isSubmitting { ProgressView().controlSize(.large) } }
         .animation(.easeOut(duration: 0.3), value: viewModel.scanPhase)
+        .interactiveDismissDisabled()
         .fullScreenCover(isPresented: $viewModel.showDelta) {
-            StatDeltaView(before: appState.fighter, after: viewModel.meal.fighter) {
+            StatDeltaView(before: fighterBefore, after: viewModel.meal.fighter) {
                 appState.apply(meal: viewModel.meal)
                 onDone()
             }
+            .interactiveDismissDisabled()
         }
     }
 
@@ -67,16 +98,16 @@ struct MealReviewView: View {
                 Section {
                     Text("Scale: \(viewModel.meal.scale.type), \(String(format: "%.2f", viewModel.meal.scale.pxPerMm)) px per mm")
                         .font(.caption).foregroundStyle(.secondary)
-                    if let message = viewModel.errorMessage { Text(message).foregroundStyle(.red).font(.footnote) }
                 }
                 .listRowBackground(Color.clear)
             }
             .scrollContentBackground(.hidden)
             .overlay { if viewModel.isRelabeling { ProgressView() } }
-            Button { viewModel.showDelta = true } label: {
+            Button { Task { await viewModel.confirm(using: appState.api) } } label: {
                 Text("Confirm meal").frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent).controlSize(.large).padding()
+            .disabled(viewModel.isBusy)
         }
     }
 }

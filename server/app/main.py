@@ -177,9 +177,6 @@ async def upload_meal(player_id: str = Form(...), image: UploadFile = File(...))
 
     try:
         analysis = await asyncio.to_thread(portions.analyze, jpeg_bytes)
-    except portions.ScaleReferenceNotFound:
-        raise HTTPException(status_code=400, detail={
-            "error": "no scale reference", "hint": "place a card or fork on the plate"})
     except (UnidentifiedImageError, OSError):
         raise HTTPException(status_code=400, detail={"error": "bad image", "hint": "could not read that photo"})
 
@@ -189,11 +186,10 @@ async def upload_meal(player_id: str = Form(...), image: UploadFile = File(...))
 
     meal = Meal(id=meal_id, player_id=player.id, image_path=image_path,
                 image_w=analysis.image_w, image_h=analysis.image_h,
-                scale_ref_type=analysis.scale_type, scale_px_per_mm=analysis.px_per_mm)
+                scale_ref_type=analysis.scale_type, scale_px_per_mm=analysis.px_per_mm,
+                status="draft")
     session.add(meal)
 
-    image_bgr = portions.decode_image(jpeg_bytes)
-    thumbs: dict[str, str] = {}
     for region in analysis.regions:
         food = food_classes().get(region.label)
         session.add(MealItem(
@@ -202,17 +198,66 @@ async def upload_meal(player_id: str = Form(...), image: UploadFile = File(...))
             grams_low=region.grams_low, grams_high=region.grams_high,
             confidence=region.confidence, area_px=region.area_px,
             polygon_json=json.dumps(region.polygon)))
-        if food is not None:
-            thumbs[region.label] = _save_thumbnail(image_bgr, region.mask, player.id, region.label)
     session.commit()
 
-    new_labels = game.record_discoveries(session, player.id, thumbs)
+    new_labels = game.undiscovered_labels(
+        session, player.id, [region.label for region in analysis.regions])
     payload = game.meal_payload(session, meal, new_labels)
     log.info("meal %s: %d regions, scale=%s %.2f px/mm, %.2fs", meal_id, len(analysis.regions),
              analysis.scale_type, analysis.px_per_mm, analysis.elapsed_s)
+    return payload
+
+
+def _meal_thumbnails(session, meal: Meal) -> dict[str, str]:
+    image_bgr = portions.decode_image((UPLOAD_DIR / meal.image_path).read_bytes())
+    thumbs: dict[str, str] = {}
+    items = session.scalars(select(MealItem).where(MealItem.meal_id == meal.id)).all()
+    for item in items:
+        if item.label not in food_classes():
+            continue
+        polygon = json.loads(item.polygon_json)
+        mask = cv2.fillPoly(np.zeros((meal.image_h, meal.image_w), dtype=np.uint8),
+                            [np.array(polygon, dtype=np.int32)], 1).astype(bool)
+        thumbs[item.label] = _save_thumbnail(image_bgr, mask, meal.player_id, item.label)
+    return thumbs
+
+
+@app.post("/meals/{meal_id}/confirm")
+async def confirm_meal(meal_id: str):
+    session = get_session()
+    meal = session.get(Meal, meal_id)
+    if meal is None:
+        raise HTTPException(status_code=404, detail={"error": "unknown meal", "hint": "scan the meal again"})
+    if meal.status == "confirmed":
+        return game.meal_payload(session, meal)
+
+    thumbs = _meal_thumbnails(session, meal)
+    meal.status = "confirmed"
+    session.commit()
+    new_labels = game.record_discoveries(session, meal.player_id, thumbs)
+    payload = game.meal_payload(session, meal, new_labels)
+    player = session.get(Player, meal.player_id)
     await realtime.publish(player.league_id, {
         "type": "fighter_update", "player_id": player.id, "fighter": payload["fighter"]})
     return payload
+
+
+@app.delete("/meals/{meal_id}")
+def discard_meal(meal_id: str):
+    session = get_session()
+    meal = session.get(Meal, meal_id)
+    if meal is None:
+        raise HTTPException(status_code=404, detail={"error": "unknown meal", "hint": "it may already be discarded"})
+    if meal.status != "draft":
+        raise HTTPException(status_code=409, detail={"error": "meal already confirmed", "hint": "confirmed meals cannot be discarded"})
+
+    items = session.scalars(select(MealItem).where(MealItem.meal_id == meal.id)).all()
+    for item in items:
+        session.delete(item)
+    session.delete(meal)
+    session.commit()
+    (UPLOAD_DIR / meal.image_path).unlink(missing_ok=True)
+    return {"ok": True}
 
 
 class Relabel(BaseModel):
@@ -233,6 +278,10 @@ async def relabel_item(meal_id: str, item_id: str, body: Relabel):
     item.grams, item.grams_low, item.grams_high = portions.regrams(body.label, item.area_px, meal.scale_px_per_mm)
     item.corrected = True
     session.commit()
+
+    if meal.status == "draft":
+        new_labels = game.undiscovered_labels(session, meal.player_id, [body.label])
+        return game.meal_payload(session, meal, new_labels)
 
     image_bgr = portions.decode_image((UPLOAD_DIR / meal.image_path).read_bytes())
     polygon = json.loads(item.polygon_json)
