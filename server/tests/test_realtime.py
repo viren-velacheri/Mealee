@@ -153,3 +153,36 @@ def test_idle_client_gets_a_clean_close(monkeypatch):
             with pytest.raises(WebSocketDisconnect) as closed:
                 socket.receive_text()
             assert closed.value.code == 1000
+
+
+def test_first_publish_after_a_redis_restart_reaches_a_new_subscriber(local_redis):
+    async def run() -> list[str]:
+        realtime = Realtime()
+        await realtime.connect()
+        gone = FakeSocket(lifetime_s=10)
+        serving_gone = asyncio.create_task(realtime.serve_socket("DEMO", gone))
+        await asyncio.sleep(0.3)
+        await realtime.publish("DEMO", {"type": "fighter_update", "n": 0})
+
+        local_redis.process.terminate()
+        local_redis.process.wait(timeout=5)
+        with contextlib.suppress(Exception):
+            await asyncio.wait_for(serving_gone, timeout=5)
+        local_redis.process = subprocess.Popen(
+            ["redis-server", "--port", str(local_redis.port), "--save", "", "--appendonly", "no"],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        await asyncio.sleep(0.5)
+
+        fresh = FakeSocket(lifetime_s=3)
+        serving_fresh = asyncio.create_task(realtime.serve_socket("DEMO", fresh))
+        await asyncio.sleep(0.3)
+        await realtime.publish("DEMO", {"type": "fighter_update", "n": 1})
+        await asyncio.sleep(0.3)
+        await fresh.close()
+        with contextlib.suppress(Exception):
+            await asyncio.wait_for(serving_fresh, timeout=5)
+        await realtime.close()
+        return fresh.sent
+
+    received = asyncio.run(run())
+    assert len(received) == 1 and '"n": 1' in received[0]

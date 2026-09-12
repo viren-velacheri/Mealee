@@ -64,3 +64,7 @@ One line per non-obvious choice: what was chosen over what, and why.
   answers pings but never delivers is the worst failure mode at an expo.
 - One uvicorn worker in production: the nightly scheduler is per process, and Redis
   Cloud's connection cap is per plan, not per worker. Railway runs one replica.
+- One immediate Redis retry, no backoff: after a failover an idle pooled connection still
+  reports connected and fails on first use, which lost the first publish after every
+  restart. One retry fixes that at no cost; a backoff would add latency to the photo path
+  during a real outage, when publish is best effort anyway.

@@ -45,5 +45,9 @@ open. Commit hashes refer to branch `claude/hopeful-mayer-q59x3p`.
   idle timeout sends a proper close frame; nightly publish failures are logged;
   unused `mealee:live:*` key removed.
 - iOS: `AppState` now reconnects the event stream after the server closes it.
+- Found in the e2e failover run and fixed: the first publish after a Redis restart was
+  lost because an idle pooled connection still reported connected. One immediate retry.
+  Regression test added; e2e failover run passes (client closed 1012 on the drop,
+  intake 200 during the outage, fresh subscriber receives after the restart).
 - Open: Redis Cloud and Atlas still unverified live. Nightly job assumes one worker
   (Railway runs one).

@@ -295,7 +295,7 @@ async def league_socket(socket: WebSocket, code: str):
     except WebSocketDisconnect:
         return
     except RedisError as error:
-        log.warning("league socket %s: redis unavailable: %r", code, error)
+        log.warning("league socket %s: redis unavailable: %s", code, error)
         with contextlib.suppress(Exception):
             await socket.close(code=1013)
     except asyncio.TimeoutError:

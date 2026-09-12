@@ -40,8 +40,14 @@ class Realtime:
             log.warning("REDIS_URL unset. Realtime is in-process only; run one worker.")
             return
         import redis.asyncio as redis_async
+        from redis.asyncio.retry import Retry
+        from redis.backoff import NoBackoff
+        # One immediate retry: after a Redis restart an idle pooled connection still
+        # reports connected and fails on first use. Without this the first publish after
+        # every failover is lost. No backoff, so a real outage costs nothing extra.
         self._redis = redis_async.from_url(REDIS_URL, socket_connect_timeout=2, socket_timeout=1,
-                                           max_connections=MAX_REDIS_CONNECTIONS)
+                                           max_connections=MAX_REDIS_CONNECTIONS,
+                                           retry=Retry(NoBackoff(), 1))
         await self._redis.ping()
         log.info("realtime: connected to Redis")
 
@@ -62,7 +68,7 @@ class Realtime:
                 try:
                     await self._redis.publish(self._channel(league_code), payload)
                 except RedisError as error:
-                    log.warning("publish to %s failed: %r", league_code, error)
+                    log.warning("publish to %s failed: %s", league_code, error)
             return
         for socket in list(self._local_sockets.get(league_code, ())):
             try:
@@ -104,11 +110,11 @@ class Realtime:
                 if item["type"] == "message":
                     await socket.send_text(item["data"].decode())
         except (WebSocketDisconnect, RuntimeError) as error:
-            log.info("forward stopped, client gone: %r", error)
+            log.info("forward stopped, client gone: %s", error)
         except Exception as error:
             # The subscription is dead but the client still gets pongs and would wait
             # forever. Closing it makes the arena and the phone reconnect.
-            log.warning("forward stopped, closing client: %r", error)
+            log.warning("forward stopped, closing client: %s", error)
             with contextlib.suppress(Exception):
                 await socket.close(code=1012)
 
