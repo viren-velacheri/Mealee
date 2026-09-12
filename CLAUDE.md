@@ -67,12 +67,17 @@ Three stores, each with one job. Do not blur them.
 ## Layout
 
 ```
-ios/Mealee.xcodeproj   SwiftUI app
-server/                FastAPI, all CV code
+ios/project.yml        XcodeGen spec; `xcodegen generate` produces Mealee.xcodeproj
+ios/Mealee/            SwiftUI app: API/, Models/, ViewModels/, Views/, Fixtures/
+ios/MealeeTests/       BattleSimTests pins Swift to Python
+server/app/            FastAPI, all CV code; server/tests/ pytest
 arena/index.html       projector page
-spikes/                standalone spike scripts
-data/                  foods.yaml, usda.sqlite
+spikes/                standalone spike scripts and SPIKE_RESULTS.md
+data/                  foods.yaml, nutrients_fallback.yaml, build_usda.py, usda.sqlite
 ```
+
+Auth0 login is gated by `AUTH0_ENABLED` in `ios/Config.xcconfig`. Set it to `NO` at the
+venue if login misbehaves; the app then goes straight to the join screen.
 
 ## Layers
 
