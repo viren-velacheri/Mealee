@@ -48,7 +48,7 @@ geometry plus real nutrient data, and the fight is a simulation we wrote.
 | Game state | SQLite via SQLAlchemy |
 | Player identity | MongoDB Atlas |
 | Realtime | Redis Cloud pub/sub behind FastAPI WebSockets, HTTP polling fallback |
-| Nutrition | USDA FoodData Central, `data/usda.sqlite`, no live API calls |
+| Nutrition | Local curated USDA data; live FoodData Central search only for manual corrections |
 | Arena | One static HTML page, vanilla JS, served at `/arena/{code}` |
 
 ## Storage split
@@ -99,8 +99,8 @@ Feature freeze at hour 18. After that, bug fixes on the demo path and polish onl
 
 ## Will not build
 
-Accounts beyond Auth0 login, push notifications, real money, mixed-dish decomposition
-(curry over rice is one item), settings screens, iPad layout, Android, App Store
+Accounts beyond Auth0 login, push notifications, real money, automatic mixed-dish decomposition
+(people can manually split a bowl into ingredients), settings screens, iPad layout, Android, App Store
 submission, Core Data or SwiftData. App state is in memory plus a JSON cache in
 Application Support.
 

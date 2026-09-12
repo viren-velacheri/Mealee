@@ -4,31 +4,16 @@ struct FightPlaybackView: View {
     @Environment(AppState.self) private var appState
     @Bindable var viewModel: FightViewModel
 
+    // Whoever acted on the most recent shown turn is mid-lunge.
+    private var attacker: String? { viewModel.isPlaying ? viewModel.shownTurns.last?.actor : nil }
+    private var defender: String? { attacker.map { $0 == "a" ? "b" : "a" } }
+
     var body: some View {
-        VStack(spacing: 14) {
+        VStack(spacing: 12) {
             if let fight = viewModel.fight {
-                HStack(alignment: .top, spacing: 12) {
-                    FighterCard(combatant: fight.a, hp: viewModel.aHp, hits: viewModel.aHits, leading: viewModel.aHp >= viewModel.bHp)
-                    FighterCard(combatant: fight.b, hp: viewModel.bHp, hits: viewModel.bHits, leading: viewModel.bHp > viewModel.aHp)
-                }
+                arena(fight)
                 callout
-                ScrollViewReader { proxy in
-                    ScrollView(showsIndicators: false) {
-                        LazyVStack(spacing: 0) {
-                            ForEach(viewModel.shownTurns) { turn in
-                                TurnRow(turn: turn, streams: turn.id == viewModel.shownTurns.last?.id)
-                                    .id(turn.id)
-                                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                            }
-                        }
-                        .padding(.vertical, 6)
-                    }
-                    .glassCard(tint: Palette.mist, padding: 12)
-                    .animation(Motion.settle, value: viewModel.shownTurns.count)
-                    .onChange(of: viewModel.shownTurns.count) { _, _ in
-                        if let last = viewModel.shownTurns.last { withAnimation(Motion.settle) { proxy.scrollTo(last.id, anchor: .bottom) } }
-                    }
-                }
+                log
                 controls
             }
         }
@@ -41,19 +26,92 @@ struct FightPlaybackView: View {
         }
     }
 
-    private var callout: some View {
+    // Depth is faked the way a battle screen does it: the far fighter sits higher and
+    // smaller, the near fighter lower and full size.
+    private func arena(_ fight: FightResponse) -> some View {
         ZStack {
-            if let damage = viewModel.lastDamage, viewModel.isPlaying {
-                PopNumber(value: damage, prefix: "-").id(viewModel.shownTurns.count)
-            } else {
-                Text(viewModel.callout).font(viewModel.isFinished ? TypeScale.title : TypeScale.heading)
-                    .foregroundStyle(Palette.ink).multilineTextAlignment(.center)
-                    .contentTransition(.numericText())
-                    .transition(.scale.combined(with: .opacity))
+            VStack(spacing: 0) {
+                HStack(alignment: .top) {
+                    Spacer(minLength: 0)
+                    far(fight.b)
+                }
+                Spacer(minLength: 8)
+                HStack(alignment: .bottom) {
+                    near(fight.a)
+                    Spacer(minLength: 0)
+                }
             }
         }
-        .frame(minHeight: 56)
-        .animation(Motion.bounce, value: viewModel.callout)
+        .frame(maxWidth: .infinity)
+    }
+
+    private func far(_ combatant: Combatant) -> some View {
+        VStack(spacing: 2) {
+            ArenaNameplate(combatant: combatant, hp: viewModel.bHp)
+            ZStack(alignment: .bottom) {
+                GroundShadow(width: 96)
+                SquiggleFighter(combatant: combatant, facingRight: false,
+                                lunge: attacker == "b" ? 1 : 0, defeated: viewModel.bHp <= 0)
+                    .modifier(Shake(hits: CGFloat(viewModel.bHits)))
+                    .animation(.easeOut(duration: 0.4), value: viewModel.bHits)
+                damagePop(over: "b")
+            }
+        }
+        .scaleEffect(0.72, anchor: .bottom)
+        .frame(height: 150)
+    }
+
+    private func near(_ combatant: Combatant) -> some View {
+        VStack(spacing: 2) {
+            ZStack(alignment: .bottom) {
+                GroundShadow(width: 132)
+                SquiggleFighter(combatant: combatant, facingRight: true,
+                                lunge: attacker == "a" ? 1 : 0, defeated: viewModel.aHp <= 0)
+                    .modifier(Shake(hits: CGFloat(viewModel.aHits)))
+                    .animation(.easeOut(duration: 0.4), value: viewModel.aHits)
+                damagePop(over: "a")
+            }
+            ArenaNameplate(combatant: combatant, hp: viewModel.aHp)
+        }
+    }
+
+    @ViewBuilder
+    private func damagePop(over side: String) -> some View {
+        if let damage = viewModel.lastDamage, viewModel.isPlaying, defender == side {
+            PopNumber(value: damage, prefix: "-")
+                .id(viewModel.shownTurns.count)
+                .offset(y: -150)
+        }
+    }
+
+    private var callout: some View {
+        Text(viewModel.callout)
+            .font(viewModel.isFinished ? TypeScale.title : TypeScale.heading)
+            .foregroundStyle(Palette.ink).multilineTextAlignment(.center)
+            .contentTransition(.numericText())
+            .frame(minHeight: 34)
+            .animation(Motion.bounce, value: viewModel.callout)
+    }
+
+    private var log: some View {
+        ScrollViewReader { proxy in
+            ScrollView(showsIndicators: false) {
+                LazyVStack(spacing: 0) {
+                    ForEach(viewModel.shownTurns) { turn in
+                        TurnRow(turn: turn, streams: turn.id == viewModel.shownTurns.last?.id)
+                            .id(turn.id)
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
+                }
+                .padding(.vertical, 6)
+            }
+            .frame(maxHeight: 132)
+            .glassCard(tint: Palette.mist, padding: 12)
+            .animation(Motion.settle, value: viewModel.shownTurns.count)
+            .onChange(of: viewModel.shownTurns.count) { _, _ in
+                if let last = viewModel.shownTurns.last { withAnimation(Motion.settle) { proxy.scrollTo(last.id, anchor: .bottom) } }
+            }
+        }
     }
 
     private var controls: some View {

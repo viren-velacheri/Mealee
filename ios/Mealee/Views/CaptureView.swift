@@ -82,6 +82,7 @@ struct CaptureView: View {
                     .frame(width: 44, height: 44).background(.ultraThinMaterial, in: Circle())
             }
             .buttonStyle(Pressable())
+            .accessibilityLabel("Cancel")
             Spacer()
             Button {
                 Haptics.thud()

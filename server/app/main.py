@@ -10,20 +10,21 @@ from pathlib import Path
 import cv2
 import httpx
 import numpy as np
-from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile, WebSocket
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile, WebSocket
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from PIL import UnidentifiedImageError
 from pydantic import BaseModel
 from redis.exceptions import RedisError
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 from starlette.websockets import WebSocketDisconnect
 
 from app import foods as food_catalog
 from app import game, identity, nightly, portions
 from app.config import ARENA_HTML_PATH, UPLOAD_DIR
 from app.db import (CatalogFood, Fight, IntakeEvent, League, Meal, MealItem, Player,
-                    get_session, init_db)
+                    init_db, request_session)
 from app.foods import class_labels, food_classes, warn_if_no_usda
 from app.realtime import realtime
 
@@ -84,7 +85,7 @@ def health():
 
 
 @app.get("/foods/search")
-async def search_foods(q: str):
+async def search_foods(q: str, session: Session = Depends(request_session)):
     query = q.strip()[:60]
     if len(query) < 2:
         raise HTTPException(status_code=400, detail={"error": "search too short", "hint": "enter at least 2 characters"})
@@ -99,17 +100,19 @@ async def search_foods(q: str):
             "error": "food search unavailable", "hint": "check the server connection and try again",
         })
 
-    session = get_session()
     for result in usda_results:
         session.merge(CatalogFood(
             fdc_id=result.fdc_id, label=result.label, source=result.source,
             kcal=result.kcal, protein_g=result.protein_g, fiber_g=result.fiber_g,
             sodium_mg=result.sodium_mg, caffeine_mg=result.caffeine_mg,
+            is_vegetable=result.is_vegetable,
         ))
     session.commit()
     combined = local_results + usda_results
-    unique = list({result.fdc_id: result for result in reversed(combined)}.values())
-    return {"items": [result.as_dict() for result in unique[:16]]}
+    unique = {}
+    for result in combined:
+        unique.setdefault(result.fdc_id, result)
+    return {"items": [result.as_dict() for result in list(unique.values())[:16]]}
 
 
 class CreateLeague(BaseModel):
@@ -117,8 +120,7 @@ class CreateLeague(BaseModel):
 
 
 @app.post("/leagues")
-def create_league(body: CreateLeague):
-    session = get_session()
+def create_league(body: CreateLeague, session: Session = Depends(request_session)):
     league = League(code=game.new_league_code(session), name=body.name.strip()[:64],
                     week_start=game.week_start(game.today()))
     session.add(league)
@@ -127,14 +129,12 @@ def create_league(body: CreateLeague):
 
 
 @app.get("/leagues/{code}")
-def get_league(code: str):
-    session = get_session()
+def get_league(code: str, session: Session = Depends(request_session)):
     return game.league_payload(session, _league_or_404(session, code))
 
 
 @app.get("/leagues/{code}/latest-fight")
-async def get_latest_fight(code: str):
-    session = get_session()
+async def get_latest_fight(code: str, session: Session = Depends(request_session)):
     league = _league_or_404(session, code)
     fight = game.latest_fight(session, league.code)
     if fight is None:
@@ -150,8 +150,7 @@ class JoinLeague(BaseModel):
 
 
 @app.post("/players")
-def join_league(body: JoinLeague):
-    session = get_session()
+def join_league(body: JoinLeague, session: Session = Depends(request_session)):
     league = _league_or_404(session, body.league_code)
     player = Player(id=str(uuid.uuid4()), league_id=league.code, name=body.name.strip()[:32],
                     emoji=body.emoji[:8], auth0_sub=body.auth0_sub)
@@ -163,8 +162,7 @@ def join_league(body: JoinLeague):
 
 
 @app.get("/fighters/{player_id}/today")
-def fighter_today(player_id: str):
-    session = get_session()
+def fighter_today(player_id: str, session: Session = Depends(request_session)):
     _player_or_422(session, player_id)
     return game.fighter_payload(game.compute_fighter(session, player_id))
 
@@ -175,10 +173,9 @@ class Intake(BaseModel):
 
 
 @app.post("/intake")
-async def intake(body: Intake):
+async def intake(body: Intake, session: Session = Depends(request_session)):
     if body.kind not in ("water", "coffee"):
         raise HTTPException(status_code=400, detail={"error": "bad kind", "hint": "water or coffee"})
-    session = get_session()
     player = _player_or_422(session, body.player_id)
     session.add(IntakeEvent(player_id=player.id, day=game.today(), kind=body.kind))
     session.commit()
@@ -200,8 +197,8 @@ def _save_thumbnail(image_bgr, mask, player_id: str, label: str) -> str:
 
 
 @app.post("/meals")
-async def upload_meal(player_id: str = Form(...), image: UploadFile = File(...)):
-    session = get_session()
+async def upload_meal(player_id: str = Form(...), image: UploadFile = File(...),
+                      session: Session = Depends(request_session)):
     player = _player_or_422(session, player_id)
     jpeg_bytes = await image.read()
     if not jpeg_bytes or len(jpeg_bytes) > MAX_UPLOAD_BYTES:
@@ -257,8 +254,7 @@ def _meal_thumbnails(session, meal: Meal) -> dict[str, str]:
 
 
 @app.post("/meals/{meal_id}/confirm")
-async def confirm_meal(meal_id: str):
-    session = get_session()
+async def confirm_meal(meal_id: str, session: Session = Depends(request_session)):
     meal = session.get(Meal, meal_id)
     if meal is None:
         raise HTTPException(status_code=404, detail={"error": "unknown meal", "hint": "scan the meal again"})
@@ -277,8 +273,7 @@ async def confirm_meal(meal_id: str):
 
 
 @app.delete("/meals/{meal_id}")
-def discard_meal(meal_id: str):
-    session = get_session()
+def discard_meal(meal_id: str, session: Session = Depends(request_session)):
     meal = session.get(Meal, meal_id)
     if meal is None:
         raise HTTPException(status_code=404, detail={"error": "unknown meal", "hint": "it may already be discarded"})
@@ -328,8 +323,8 @@ def _meal_and_item(session, meal_id: str, item_id: str) -> tuple[Meal, MealItem]
 
 
 @app.patch("/meals/{meal_id}/items/{item_id}")
-async def relabel_item(meal_id: str, item_id: str, body: MealItemUpdate):
-    session = get_session()
+async def relabel_item(meal_id: str, item_id: str, body: MealItemUpdate,
+                       session: Session = Depends(request_session)):
     meal, item = _meal_and_item(session, meal_id, item_id)
     if body.label is not None or body.fdc_id is not None:
         item.label, item.fdc_id, is_fixed = _food_choice(session, body.label, body.fdc_id)
@@ -362,8 +357,8 @@ async def relabel_item(meal_id: str, item_id: str, body: MealItemUpdate):
 
 
 @app.post("/meals/{meal_id}/items")
-def add_meal_item(meal_id: str, body: MealItemCreate):
-    session = get_session()
+def add_meal_item(meal_id: str, body: MealItemCreate,
+                  session: Session = Depends(request_session)):
     meal = session.get(Meal, meal_id)
     if meal is None:
         raise HTTPException(status_code=404, detail={"error": "unknown meal", "hint": "scan the meal again"})
@@ -383,8 +378,8 @@ def add_meal_item(meal_id: str, body: MealItemCreate):
 
 
 @app.delete("/meals/{meal_id}/items/{item_id}")
-def delete_meal_item(meal_id: str, item_id: str):
-    session = get_session()
+def delete_meal_item(meal_id: str, item_id: str,
+                     session: Session = Depends(request_session)):
     meal, item = _meal_and_item(session, meal_id, item_id)
     if meal.status != "draft":
         raise HTTPException(status_code=409, detail={"error": "meal already confirmed", "hint": "edit before confirming"})
@@ -394,8 +389,7 @@ def delete_meal_item(meal_id: str, item_id: str):
 
 
 @app.get("/players/{player_id}/discoveries")
-def discoveries(player_id: str):
-    session = get_session()
+def discoveries(player_id: str, session: Session = Depends(request_session)):
     _player_or_422(session, player_id)
     return game.discoveries_payload(session, player_id)
 
@@ -407,10 +401,9 @@ class StartFight(BaseModel):
 
 
 @app.post("/fights")
-async def start_fight(body: StartFight):
+async def start_fight(body: StartFight, session: Session = Depends(request_session)):
     if body.kind not in ("quick", "nightly"):
         raise HTTPException(status_code=400, detail={"error": "bad kind", "hint": "quick or nightly"})
-    session = get_session()
     player_a = _player_or_422(session, body.a_player_id)
     player_b = _player_or_422(session, body.b_player_id)
     if player_a.id == player_b.id:
@@ -426,8 +419,7 @@ async def start_fight(body: StartFight):
 
 
 @app.get("/fights/{fight_id}")
-def get_fight(fight_id: str):
-    session = get_session()
+def get_fight(fight_id: str, session: Session = Depends(request_session)):
     fight = session.get(Fight, fight_id)
     if fight is None:
         raise HTTPException(status_code=404, detail={"error": "unknown fight", "hint": "check the id"})

@@ -53,6 +53,7 @@ struct HomeView: View {
                 Button { Haptics.tap(); showFoodex = true } label: {
                     Image(systemName: "book.closed.fill").foregroundStyle(Palette.sage)
                 }
+                .accessibilityLabel("Foodex")
             }
         }
         .fullScreenCover(isPresented: $showCapture) { CaptureView() }

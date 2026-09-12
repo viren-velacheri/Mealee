@@ -29,7 +29,7 @@ final class MealeeUITests: XCTestCase {
         app.buttons["Join league"].tap()
         app.tap()
 
-        XCTAssertTrue(app.navigationBars["Today's fighter"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["Today"].waitForExistence(timeout: 10))
 
         app.buttons["Foodex"].tap()
         XCTAssertTrue(app.navigationBars["Foodex"].waitForExistence(timeout: 5))
@@ -37,7 +37,7 @@ final class MealeeUITests: XCTestCase {
         app.buttons["Done"].tap()
 
         tapAfterScrolling(app.buttons["Log a meal"], in: app)
-        XCTAssertTrue(app.staticTexts["Frame your meal, then tap the white button"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Frame your meal, then tap the shutter"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["Choose photo"].exists)
         XCTAssertTrue(app.buttons["Cancel"].exists)
         app.buttons["Cancel"].tap()
@@ -49,11 +49,10 @@ final class MealeeUITests: XCTestCase {
         app.buttons["Skip"].tap()
         XCTAssertTrue(app.buttons["Verify replay"].waitForExistence(timeout: 2))
         app.buttons["Verify replay"].tap()
-        XCTAssertTrue(app.staticTexts["✓ replayed on device"].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.buttons["✓ replayed on device"].waitForExistence(timeout: 2))
 
         app.tabBars.buttons["League"].tap()
-        XCTAssertTrue(app.navigationBars["League"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["DEMO"].exists)
+        XCTAssertTrue(app.staticTexts["DEMO"].waitForExistence(timeout: 5))
         let leaveLeague = app.buttons["Leave league"]
         for _ in 0..<6 where !leaveLeague.exists { app.swipeUp() }
         XCTAssertTrue(leaveLeague.exists)

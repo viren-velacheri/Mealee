@@ -46,7 +46,7 @@ class MealItem(Base):
     __tablename__ = "meal_items"
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     meal_id: Mapped[str] = mapped_column(ForeignKey("meals.id"), index=True)
-    label: Mapped[str] = mapped_column(String(32))
+    label: Mapped[str] = mapped_column(String(160))
     fdc_id: Mapped[int] = mapped_column(Integer)
     grams: Mapped[float] = mapped_column(Float)
     grams_low: Mapped[float] = mapped_column(Float)
@@ -67,6 +67,7 @@ class CatalogFood(Base):
     fiber_g: Mapped[float] = mapped_column(Float)
     sodium_mg: Mapped[float] = mapped_column(Float)
     caffeine_mg: Mapped[float] = mapped_column(Float, default=0)
+    is_vegetable: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class IntakeEvent(Base):
@@ -145,3 +146,11 @@ def init_db() -> None:
 
 def get_session() -> Session:
     return SessionLocal()
+
+
+def request_session():
+    session = get_session()
+    try:
+        yield session
+    finally:
+        session.close()

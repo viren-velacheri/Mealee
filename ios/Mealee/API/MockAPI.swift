@@ -104,10 +104,12 @@ final class MockAPI: MealeeAPI {
     private var allSearchFoods: [FoodSearchResult] {
         foodClassLabels.enumerated().map { index, label in
             FoodSearchResult(fdcId: 100_000 + index, label: label, source: "Mealee catalog",
-                             kcal: 100, proteinG: 5, fiberG: 2, sodiumMg: 50, caffeineMg: 0)
+                             kcal: 100, proteinG: 5, fiberG: 2, sodiumMg: 50, caffeineMg: 0,
+                             isVegetable: ["salad greens", "broccoli", "carrots", "beans"].contains(label))
         } + [
             FoodSearchResult(fdcId: 173032, label: "Goji berries, dried", source: "USDA SR Legacy",
-                             kcal: 349, proteinG: 14.3, fiberG: 13, sodiumMg: 298, caffeineMg: 0),
+                             kcal: 349, proteinG: 14.3, fiberG: 13, sodiumMg: 298, caffeineMg: 0,
+                             isVegetable: false),
         ]
     }
 

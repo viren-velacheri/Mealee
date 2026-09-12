@@ -55,6 +55,8 @@ def day_totals(session: Session, player_id: str, day: date,
                     totals.fiber_g += catalog_food.fiber_g * scale
                     totals.sodium_mg += catalog_food.sodium_mg * scale
                     totals.caffeine_mg += catalog_food.caffeine_mg * scale
+                    if catalog_food.is_vegetable:
+                        totals.veg_g += item.grams
     intake = session.scalars(select(IntakeEvent).where(
         IntakeEvent.player_id == player_id, IntakeEvent.day == day)).all()
     for event in intake:

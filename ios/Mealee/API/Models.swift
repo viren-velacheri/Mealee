@@ -70,6 +70,7 @@ struct FoodSearchResult: Codable, Equatable, Identifiable {
     let fiberG: Double
     let sodiumMg: Double
     let caffeineMg: Double
+    let isVegetable: Bool
 
     var id: Int { fdcId }
 }

@@ -15,6 +15,8 @@ make test
 
 `data/usda.sqlite` is built once with `make usda` on a machine that can reach USDA.
 Until then the server uses `data/nutrients_fallback.yaml` and says so in the log.
+The meal editor searches FoodData Central for foods outside the curated detector list.
+Set `USDA_API_KEY` to a data.gov key for regular use; the default `DEMO_KEY` is rate-limited.
 
 ## Deploy
 

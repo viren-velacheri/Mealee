@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 from PIL import Image
 
 from app import foods, portions
+from app.db import engine
 from app.main import app
 
 
@@ -65,6 +66,12 @@ def test_new_player_has_a_fighter(client, players):
     fighter = client.get(f"/fighters/{players[0]}/today").json()
     assert fighter["hp_max"] == 100
     assert fighter["reasons"]
+
+
+def test_requests_release_database_connections(client, players):
+    for _ in range(25):
+        assert client.get(f"/fighters/{players[0]}/today").status_code == 200
+    assert engine.pool.checkedout() == 0
 
 
 def test_meal_without_scale_reference_uses_estimated_scale(client, monkeypatch):

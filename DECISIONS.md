@@ -99,3 +99,15 @@ One line per non-obvious choice: what was chosen over what, and why.
   that this phone and the Mac running the server are on the same network", because a
   dead server, a blocked network and a timeout are indistinguishable to the player and
   have the same fix.
+- Manual food correction uses USDA FoodData Central search rather than Querit web search:
+  fighter stats need structured nutrient values tied to stable FDC IDs, while Querit returns
+  general web content. The camera still makes no open-ended or language-model decision.
+- Mixed bowls are split manually in review rather than pretending the segmenter can see hidden
+  ingredients: each searched ingredient has its own grams and nutrient contribution before Confirm.
+- Custom avatars accept any single emoji rather than uploading images: player, fight, league, and
+  arena payloads already render an emoji everywhere, so this expands choice without adding media storage.
+- The fight is staged like a creature battle rather than two stat cards: the opponent
+  sits high and small, you sit low and large, and depth is faked with scale and offset
+  alone. It reads as one scene, which two glass panels never did.
+- A fighter is the food emoji with four squiggly limbs and nothing else. No body shape
+  competes with the food, and a stroked sine wave costs one Path per limb.

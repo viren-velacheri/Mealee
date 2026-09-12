@@ -58,12 +58,14 @@ class FoodSearchResult:
     fiber_g: float
     sodium_mg: float
     caffeine_mg: float
+    is_vegetable: bool = False
 
     def as_dict(self) -> dict:
         return {
             "fdc_id": self.fdc_id, "label": self.label, "source": self.source,
             "kcal": self.kcal, "protein_g": self.protein_g, "fiber_g": self.fiber_g,
             "sodium_mg": self.sodium_mg, "caffeine_mg": self.caffeine_mg,
+            "is_vegetable": self.is_vegetable,
         }
 
 
@@ -89,7 +91,7 @@ def local_food_search(query: str) -> list[FoodSearchResult]:
             fdc_id=food.fdc_id, label=food.label, source="Mealee catalog",
             kcal=nutrients.kcal, protein_g=nutrients.protein_g,
             fiber_g=nutrients.fiber_g, sodium_mg=nutrients.sodium_mg,
-            caffeine_mg=nutrients.caffeine_mg,
+            caffeine_mg=nutrients.caffeine_mg, is_vegetable=food.veg,
         ))
     return results
 
@@ -105,6 +107,7 @@ async def search_usda(query: str) -> list[FoodSearchResult]:
     results = []
     for food in response.json().get("foods", []):
         amounts = {row.get("nutrientId"): row.get("value", 0) for row in food.get("foodNutrients", [])}
+        category = food.get("foodCategory", "").casefold()
         results.append(FoodSearchResult(
             fdc_id=int(food["fdcId"]), label=food["description"].strip(),
             source=f"USDA {food.get('dataType', 'FoodData Central')}",
@@ -113,6 +116,7 @@ async def search_usda(query: str) -> list[FoodSearchResult]:
             fiber_g=float(amounts.get(NUTRIENT_FIBER, 0)),
             sodium_mg=float(amounts.get(NUTRIENT_SODIUM, 0)),
             caffeine_mg=float(amounts.get(NUTRIENT_CAFFEINE, 0)),
+            is_vegetable="vegetable" in category,
         ))
     return results
 
