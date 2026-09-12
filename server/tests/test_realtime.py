@@ -2,13 +2,16 @@
 takes down every publish on the worker once the Redis pool or the socket set fills up."""
 
 import asyncio
+import contextlib
 import shutil
 import socket as socket_module
 import subprocess
 import time
+import types
 
 import pytest
 from fastapi.testclient import TestClient
+from starlette.websockets import WebSocketDisconnect
 
 from app.main import app
 from app.realtime import Realtime
@@ -18,6 +21,8 @@ class FakeSocket:
     def __init__(self, lifetime_s: float) -> None:
         self.lifetime_s = lifetime_s
         self.sent: list[str] = []
+        self.closed_with: int | None = None
+        self._closed = asyncio.Event()
 
     async def accept(self) -> None:
         pass
@@ -26,9 +31,13 @@ class FakeSocket:
         self.sent.append(text)
 
     async def receive_text(self) -> str:
-        await asyncio.sleep(self.lifetime_s)
-        from starlette.websockets import WebSocketDisconnect
+        with contextlib.suppress(asyncio.TimeoutError):
+            await asyncio.wait_for(self._closed.wait(), timeout=self.lifetime_s)
         raise WebSocketDisconnect()
+
+    async def close(self, code: int = 1000) -> None:
+        self.closed_with = code
+        self._closed.set()
 
 
 def test_in_process_publish_survives_a_closed_client():
@@ -63,9 +72,10 @@ def local_redis(monkeypatch):
         except OSError:
             time.sleep(0.05)
     monkeypatch.setattr("app.realtime.REDIS_URL", f"redis://127.0.0.1:{port}")
-    yield port
-    process.terminate()
-    process.wait(timeout=5)
+    yield types.SimpleNamespace(port=port, process=process)
+    if process.poll() is None:
+        process.terminate()
+        process.wait(timeout=5)
 
 
 def test_redis_subscription_is_released_when_the_client_goes_away(local_redis):
@@ -103,3 +113,43 @@ def test_redis_live_subscriber_still_receives_after_others_left(local_redis):
 
     received = asyncio.run(run())
     assert len(received) == 1 and '"n": 1' in received[0]
+
+
+def test_publish_is_best_effort_when_redis_is_down(local_redis, caplog):
+    async def run() -> None:
+        realtime = Realtime()
+        await realtime.connect()
+        local_redis.process.terminate()
+        local_redis.process.wait(timeout=5)
+        await realtime.publish("DEMO", {"type": "fighter_update"})
+        await realtime.close()
+
+    asyncio.run(run())
+    assert "publish to DEMO failed" in caplog.text
+
+
+def test_redis_drop_closes_the_client_so_it_reconnects(local_redis):
+    async def run() -> int | None:
+        realtime = Realtime()
+        await realtime.connect()
+        socket = FakeSocket(lifetime_s=10)
+        serving = asyncio.create_task(realtime.serve_socket("DEMO", socket))
+        await asyncio.sleep(0.3)
+        local_redis.process.terminate()
+        local_redis.process.wait(timeout=5)
+        with contextlib.suppress(Exception):
+            await asyncio.wait_for(serving, timeout=5)
+        await realtime.close()
+        return socket.closed_with
+
+    assert asyncio.run(run()) == 1012
+
+
+def test_idle_client_gets_a_clean_close(monkeypatch):
+    monkeypatch.setattr("app.realtime.IDLE_TIMEOUT_S", 0.3)
+    with TestClient(app) as client:
+        league = client.post("/leagues", json={"name": "Idle"}).json()["code"]
+        with client.websocket_connect(f"/ws/league/{league}") as socket:
+            with pytest.raises(WebSocketDisconnect) as closed:
+                socket.receive_text()
+            assert closed.value.code == 1000

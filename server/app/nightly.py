@@ -1,4 +1,8 @@
-"""Resolve every league's nightly fights at 21:00 local and push results to the arena."""
+"""Resolve every league's nightly fights at 21:00 local and push results to the arena.
+
+The scheduler lives in the worker process, so the deployment runs exactly one uvicorn
+worker (see Dockerfile and railway.toml). Two workers would resolve every fight twice.
+"""
 
 import asyncio
 import logging
@@ -39,7 +43,9 @@ def resolve_all_leagues() -> int:
 def _publish(league_code: str, message: dict) -> None:
     if _loop is None:
         return
-    asyncio.run_coroutine_threadsafe(realtime.publish(league_code, message), _loop)
+    future = asyncio.run_coroutine_threadsafe(realtime.publish(league_code, message), _loop)
+    future.add_done_callback(
+        lambda done: done.exception() and log.error("nightly publish for %s failed: %r", league_code, done.exception()))
 
 
 def start(loop: asyncio.AbstractEventLoop) -> None:

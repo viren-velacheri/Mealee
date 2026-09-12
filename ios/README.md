@@ -2,12 +2,14 @@
 
 ## First build (Friday night, do not leave this for Saturday)
 
-1. `brew install xcodegen`
+1. Xcode 16 or newer (Auth0.swift 2.22+ needs it), then `brew install xcodegen`
 2. `cd ios && cp Config.example.xcconfig Config.xcconfig` and set `API_BASE_URL` to the
    server (LAN IP on venue wifi, or the Railway URL). Leave `DEVELOPMENT_TEAM` blank for
    a Personal Team, or paste the 10-character Team ID from developer.apple.com.
 3. `cp Mealee/Resources/Auth0.plist.example Mealee/Resources/Auth0.plist` (already the
    right values; the real file is gitignored so it can be swapped without a commit).
+   The SDK reads only `ClientId` and `Domain`. `CallbackMode` is a Mealee key read by
+   `Auth0Session.swift` to decide between the custom scheme and Universal Links.
 4. `xcodegen generate` then `open Mealee.xcodeproj`.
 5. Signing & Capabilities: tick "Automatically manage signing", pick the team. Personal
    Team installs expire in 7 days, which covers the hackathon.
@@ -22,8 +24,8 @@ Paste these exact strings, the bundle id is part of them:
   `edu.cmu.hackcmu.mealee://dev-c2da7fus6cmejyml.us.auth0.com/ios/edu.cmu.hackcmu.mealee/callback`
 - Allowed Logout URLs: the same string.
 - iOS App Bundle Identifier: `edu.cmu.hackcmu.mealee`
-- Apple Team ID: only if you have a paid account and want Universal Links. Not needed
-  for the custom scheme, which is what `Auth0.plist` selects.
+- Apple Team ID: only if you have a paid account and want Universal Links (iOS 17.4+).
+  Not needed for the custom scheme, which is what `CallbackMode` selects.
 
 If Auth0 misbehaves at the venue set `AUTH0_ENABLED = NO` in `Config.xcconfig` and
 rebuild. The app then skips the login screen entirely.

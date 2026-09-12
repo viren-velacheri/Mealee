@@ -96,17 +96,24 @@ final class AppState {
         guard let leagueCode else { return }
         eventTask?.cancel()
         eventTask = Task {
-            for await event in api.leagueEvents(code: leagueCode) {
-                switch event {
-                case .fighterUpdate(let updatedId, let updatedFighter):
-                    if updatedId == playerId { fighter = updatedFighter }
-                    await refresh()
-                case .fightEnded(let fight):
-                    lastFight = fight
-                    await refresh()
-                case .other:
-                    break
+            // The stream ends whenever the server closes the socket: 20 s of silence, a
+            // Redis blip, or venue wifi. Reconnect and catch up from the API.
+            while !Task.isCancelled {
+                for await event in api.leagueEvents(code: leagueCode) {
+                    switch event {
+                    case .fighterUpdate(let updatedId, let updatedFighter):
+                        if updatedId == playerId { fighter = updatedFighter }
+                        await refresh()
+                    case .fightEnded(let fight):
+                        lastFight = fight
+                        await refresh()
+                    case .other:
+                        break
+                    }
                 }
+                if Task.isCancelled { return }
+                try? await Task.sleep(for: .seconds(3))
+                await refresh()
             }
         }
     }

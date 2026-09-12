@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import json
 import logging
 import uuid
@@ -13,6 +14,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from PIL import UnidentifiedImageError
 from pydantic import BaseModel
+from redis.exceptions import RedisError
 from sqlalchemy import select
 from starlette.websockets import WebSocketDisconnect
 
@@ -290,8 +292,15 @@ def get_fight(fight_id: str):
 async def league_socket(socket: WebSocket, code: str):
     try:
         await realtime.serve_socket(code.upper(), socket)
-    except (WebSocketDisconnect, asyncio.TimeoutError):
+    except WebSocketDisconnect:
         return
+    except RedisError as error:
+        log.warning("league socket %s: redis unavailable: %r", code, error)
+        with contextlib.suppress(Exception):
+            await socket.close(code=1013)
+    except asyncio.TimeoutError:
+        with contextlib.suppress(Exception):
+            await socket.close(code=1000)
 
 
 @app.get("/arena/{code}", response_class=HTMLResponse)

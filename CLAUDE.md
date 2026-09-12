@@ -61,8 +61,9 @@ Three stores, each with one job. Do not blur them.
 - **MongoDB Atlas** holds player identity and profile only: display name, emoji, Auth0
   subject, league membership, discoveries. Written on join and on profile change, never
   during a fight.
-- **Redis Cloud** holds ephemeral realtime only: pub/sub channels per league and live
-  fight state. 29 MB limit, so keys carry a TTL and nothing durable lives here.
+- **Redis Cloud** carries pub/sub only: one channel per league. Nothing is stored there;
+  the polling fallback reads fights from SQLite. Publishing is best effort after the
+  SQLite commit, so a Redis outage costs a log line, never a failed request.
 
 ## Layout
 

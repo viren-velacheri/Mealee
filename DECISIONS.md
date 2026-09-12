@@ -8,7 +8,9 @@ One line per non-obvious choice: what was chosen over what, and why.
 - Redis pub/sub over in-process WebSocket broadcast: the arena page and the phones may be
   served by different workers once deployed, and an in-process set of sockets does not
   survive that. Falls back to in-process if `REDIS_URL` is unset, so local dev needs nothing.
-- Redis keys all carry a TTL: the plan caps at 29 MB, so nothing durable may accumulate there.
+- Redis stores nothing: the live-fight key was written on every fight and read by nothing
+  (the arena polls SQLite), so it was removed rather than wired in. Fewer commands on the
+  hot path, and the 29 MB plan is never written to.
 - Atlas writes are fire-and-forget off the request path: an Atlas timeout must never fail a
   meal upload or a fight. Identity is recoverable, a dropped demo is not.
 - Auth0 added despite the original "no auth" scope line: explicit call by the team. It is
@@ -53,3 +55,12 @@ One line per non-obvious choice: what was chosen over what, and why.
   teardown that releases the Redis subscription has to live in a finally. Without it every
   closed socket leaked one pooled connection and the worker died at 100. Verified against a
   real local Redis; `tests/test_realtime.py` pins it.
+- Publish is best effort and serialized: it runs after the SQLite commit, so raising would
+  return a 500 for a saved row, and a half-open Redis would stall the 4 s photo path. The
+  lock keeps the pool at one publisher connection, which matters against Redis Cloud's
+  per-plan connection cap. socket_timeout is 1 s for the same reason.
+- A dead pub/sub subscription closes the client socket (1012) instead of retrying inside
+  the server: the arena and the phone already reconnect on close, and a socket that
+  answers pings but never delivers is the worst failure mode at an expo.
+- One uvicorn worker in production: the nightly scheduler is per process, and Redis
+  Cloud's connection cap is per plan, not per worker. Railway runs one replica.
