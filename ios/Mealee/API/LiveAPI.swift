@@ -24,7 +24,13 @@ final class LiveAPI: MealeeAPI {
     }
 
     private func send<T: Decodable>(_ request: URLRequest) async throws -> T {
-        let (data, response) = try await session.data(for: request)
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch let failure as URLError {
+            throw APIError(error: Self.reachability(failure), hint: Self.reachabilityHint)
+        }
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         guard (200..<300).contains(status) else {
             if let apiError = try? JSONDecoder.mealee.decode(APIError.self, from: data) { throw apiError }
@@ -32,6 +38,20 @@ final class LiveAPI: MealeeAPI {
         }
         return try JSONDecoder.mealee.decode(T.self, from: data)
     }
+
+    // A dead server and a blocked network look identical to the user, so both say the
+    // one thing that fixes them: put the phone and the server on the same network.
+    private static func reachability(_ failure: URLError) -> String {
+        switch failure.code {
+        case .timedOut: "The server did not answer in time"
+        case .cannotFindHost, .cannotConnectToHost, .dnsLookupFailed: "Cannot reach the server"
+        case .notConnectedToInternet, .networkConnectionLost: "The network dropped"
+        default: "The server could not be reached"
+        }
+    }
+
+    private static let reachabilityHint =
+        "Check that this phone and the Mac running the server are on the same network."
 
     func createLeague(name: String) async throws -> String {
         struct Body: Encodable { let name: String }

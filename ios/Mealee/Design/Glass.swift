@@ -58,6 +58,47 @@ extension View {
     func primaryPill(filled: Bool = true) -> some View { modifier(PrimaryPill(filled: filled)) }
 }
 
+// Guidance sits quiet under the field it belongs to; a problem gets a tinted bed so it
+// is impossible to scroll past. Both stay inside the mint palette.
+struct Notice: View {
+    enum Kind { case guidance, problem }
+
+    let kind: Kind
+    let text: String
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Image(systemName: kind == .problem ? "exclamationmark.circle.fill" : "info.circle")
+                .font(TypeScale.label)
+            Text(text).font(TypeScale.caption).multilineTextAlignment(.leading)
+            Spacer(minLength: 0)
+        }
+        .foregroundStyle(kind == .problem ? Palette.ink : Palette.sage)
+        .padding(.horizontal, kind == .problem ? 14 : 2)
+        .padding(.vertical, kind == .problem ? 12 : 0)
+        .background {
+            if kind == .problem {
+                RoundedRectangle(cornerRadius: Layout.innerCorner, style: .continuous)
+                    .fill(Palette.leaf.opacity(0.3))
+                    .overlay(RoundedRectangle(cornerRadius: Layout.innerCorner, style: .continuous)
+                        .strokeBorder(.white.opacity(0.6), lineWidth: 1))
+            }
+        }
+    }
+}
+
+struct FieldLabel: View {
+    let text: String
+    var required = false
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Text(text).font(TypeScale.label).foregroundStyle(Palette.sage)
+            if required { Text("required").font(TypeScale.caption).foregroundStyle(Palette.slate) }
+        }
+    }
+}
+
 struct AuroraBackground: View {
     var body: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { context in

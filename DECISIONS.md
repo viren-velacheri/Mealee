@@ -92,3 +92,10 @@ One line per non-obvious choice: what was chosen over what, and why.
   ScrollViews, a TabView or .ultraThinMaterial, so on device SwiftUI drew its shader
   failure placeholder (yellow field, red prohibitory sign) over every screen. Shader
   effects now only wrap plain shapes and images, where they work.
+- The join screen never disables its buttons. A disabled pill says "no" without saying
+  why; a tap that names the one missing thing ("Enter your name first...") teaches the
+  flow in one step. The rules live in JoinForm so the wording is pinned by tests.
+- Connection failures are translated at the API boundary into one instruction, "Check
+  that this phone and the Mac running the server are on the same network", because a
+  dead server, a blocked network and a timeout are indistinguishable to the player and
+  have the same fix.
