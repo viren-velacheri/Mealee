@@ -66,6 +66,11 @@ final class LiveAPI: MealeeAPI {
                                           body: Body(leagueCode: leagueCode, name: name, emoji: emoji, auth0Sub: auth0Sub)))
     }
 
+    func timeline(playerId: String) async throws -> [TimelineEntry] {
+        let reply: TimelineResponse = try await send(try request("/players/\(playerId)/timeline"))
+        return reply.entries
+    }
+
     func league(code: String) async throws -> LeagueResponse {
         try await send(try request("/leagues/\(code)"))
     }

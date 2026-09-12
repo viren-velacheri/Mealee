@@ -11,6 +11,10 @@ struct HomeView: View {
             AuroraBackground()
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 16) {
+                    Button { Haptics.tap(); showCapture = true } label: {
+                        Label("Log a meal", systemImage: "camera.fill").primaryPill()
+                    }
+                    .buttonStyle(Pressable())
                     FighterHeroCard(stats: appState.fighter, name: appState.playerName, emoji: appState.playerEmoji,
                                     wins: appState.weekWins, offline: appState.api.isMock)
                     VStack(alignment: .leading, spacing: 14) {
@@ -32,14 +36,7 @@ struct HomeView: View {
                     }
                     .glassCard()
                     IntakeChips()
-                    Button { Haptics.tap(); showCapture = true } label: {
-                        Label("Log a meal", systemImage: "camera.fill").primaryPill()
-                    }
-                    .buttonStyle(Pressable())
-                    NavigationLink { FightView() } label: {
-                        Label("Fight", systemImage: "bolt.fill").primaryPill(filled: false)
-                    }
-                    .buttonStyle(Pressable())
+                    MealTimelineView(entries: appState.timeline)
                     if let message = appState.errorMessage {
                         Text(message).font(TypeScale.caption).foregroundStyle(Palette.slate).multilineTextAlignment(.center)
                     }

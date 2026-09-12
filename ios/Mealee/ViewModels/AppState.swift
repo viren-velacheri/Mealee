@@ -13,6 +13,7 @@ final class AppState {
     var league: LeagueResponse?
     var errorMessage: String?
     var lastFight: FightResponse?
+    var timeline: [TimelineEntry] = []
 
     private var eventTask: Task<Void, Never>?
 
@@ -72,8 +73,10 @@ final class AppState {
         do {
             async let fighterToday = api.fighterToday(playerId: playerId)
             async let leagueNow = api.league(code: leagueCode)
+            async let dayTimeline = api.timeline(playerId: playerId)
             fighter = try await fighterToday
             league = try await leagueNow
+            timeline = try await dayTimeline
         } catch {
             errorMessage = error.localizedDescription
         }

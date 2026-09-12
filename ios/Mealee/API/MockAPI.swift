@@ -8,6 +8,7 @@ final class MockAPI: MealeeAPI {
     private var league: LeagueResponse
     private let mealFixture: MealResponse
     private var fighters: [String: FighterStats] = [:]
+    private var confirmedTimeline: [TimelineEntry] = []
     private var fights: [String: FightResponse] = [:]
     private var totals: [String: DayTotals] = [:]
     private var discovered: [String: [Discovery]] = [:]
@@ -40,6 +41,11 @@ final class MockAPI: MealeeAPI {
     func createLeague(name: String) async throws -> String {
         await delay()
         return league.code
+    }
+
+    func timeline(playerId: String) async throws -> [TimelineEntry] {
+        await delay()
+        return confirmedTimeline
     }
 
     func join(leagueCode: String, name: String, emoji: String, auth0Sub: String?) async throws -> JoinResponse {
@@ -170,6 +176,14 @@ final class MockAPI: MealeeAPI {
         discovered[draft.playerId, default: []] += items
             .filter { freshLabels.contains($0.label) }
             .map { Discovery(label: $0.label, thumbnailUrl: "plate_fixture.jpg") }
+        confirmedTimeline.append(TimelineEntry(
+            mealId: mealId,
+            takenAt: ISO8601DateFormatter().string(from: Date()),
+            kcal: confirmed.dayTotals.kcal,
+            items: items.map { TimelineItem(label: $0.label, grams: $0.grams) },
+            delta: StatDelta(attack: confirmed.fighter.attack, defense: confirmed.fighter.defense,
+                             stamina: confirmed.fighter.stamina, speed: confirmed.fighter.speed,
+                             focus: confirmed.fighter.focus, recovery: confirmed.fighter.recovery)))
         broadcast(.fighterUpdate(playerId: draft.playerId, fighter: confirmed.fighter))
         return confirmed
     }

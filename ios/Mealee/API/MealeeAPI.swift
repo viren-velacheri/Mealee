@@ -19,6 +19,7 @@ protocol MealeeAPI: AnyObject {
     func startFight(aPlayerId: String, bPlayerId: String) async throws -> FightResponse
     func fight(id: String) async throws -> FightResponse
     func discoveries(playerId: String) async throws -> DiscoveriesResponse
+    func timeline(playerId: String) async throws -> [TimelineEntry]
     func imageURL(path: String) -> URL?
     func leagueEvents(code: String) -> AsyncStream<LeagueEvent>
 }

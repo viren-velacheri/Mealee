@@ -393,6 +393,12 @@ def delete_meal_item(meal_id: str, item_id: str,
     return game.meal_payload(session, meal)
 
 
+@app.get("/players/{player_id}/timeline")
+def player_timeline(player_id: str, session: Session = Depends(request_session)):
+    _player_or_422(session, player_id)
+    return {"entries": game.timeline(session, player_id)}
+
+
 @app.get("/players/{player_id}/discoveries")
 def discoveries(player_id: str, session: Session = Depends(request_session)):
     _player_or_422(session, player_id)

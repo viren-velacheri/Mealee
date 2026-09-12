@@ -220,6 +220,40 @@ let foodClassEmoji: [String: String] = [
     "noodles": "🍜", "cheese": "🧀", "coffee": "☕",
 ]
 
+// One confirmed meal and the stat change it caused, oldest first.
+struct TimelineEntry: Codable, Equatable, Identifiable {
+    let mealId: String
+    let takenAt: String
+    let kcal: Double
+    let items: [TimelineItem]
+    let delta: StatDelta
+
+    var id: String { mealId }
+}
+
+struct TimelineItem: Codable, Equatable {
+    let label: String
+    let grams: Double
+}
+
+struct StatDelta: Codable, Equatable {
+    let attack: Double
+    let defense: Double
+    let stamina: Double
+    let speed: Double
+    let focus: Double
+    let recovery: Double
+
+    var risen: [(String, Double)] {
+        [("ATK", attack), ("DEF", defense), ("STA", stamina),
+         ("SPD", speed), ("FOC", focus), ("REC", recovery)].filter { $0.1 >= 0.05 }
+    }
+}
+
+struct TimelineResponse: Codable, Equatable {
+    let entries: [TimelineEntry]
+}
+
 extension JSONDecoder {
     static let mealee: JSONDecoder = {
         let decoder = JSONDecoder()

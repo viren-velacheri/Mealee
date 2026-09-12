@@ -49,6 +49,26 @@ def new_league_code(session: Session) -> str:
             return code
 
 
+def fold_meal_into_totals(session: Session, totals: DayTotals, meal: Meal) -> list[tuple[str, float]]:
+    eaten: list[tuple[str, float]] = []
+    for item in session.scalars(select(MealItem).where(MealItem.meal_id == meal.id)):
+        eaten.append((item.label, item.grams))
+        if item.label in food_classes():
+            add_item_to_totals(totals, item.label, item.grams)
+        else:
+            catalog_food = session.get(CatalogFood, item.fdc_id)
+            if catalog_food is not None:
+                scale = item.grams / 100.0
+                totals.kcal += catalog_food.kcal * scale
+                totals.protein_g += catalog_food.protein_g * scale
+                totals.fiber_g += catalog_food.fiber_g * scale
+                totals.sodium_mg += catalog_food.sodium_mg * scale
+                totals.caffeine_mg += catalog_food.caffeine_mg * scale
+                if catalog_food.is_vegetable:
+                    totals.veg_g += item.grams
+    return eaten
+
+
 def day_totals(session: Session, player_id: str, day: date,
                include_meal_id: str | None = None) -> tuple[DayTotals, bool]:
     totals = DayTotals()
@@ -57,20 +77,7 @@ def day_totals(session: Session, player_id: str, day: date,
              if meal.status == "confirmed" or meal.id == include_meal_id]
     day_meals = [meal for meal in meals if meal.taken_at.date() == day]
     for meal in day_meals:
-        for item in session.scalars(select(MealItem).where(MealItem.meal_id == meal.id)):
-            if item.label in food_classes():
-                add_item_to_totals(totals, item.label, item.grams)
-            else:
-                catalog_food = session.get(CatalogFood, item.fdc_id)
-                if catalog_food is not None:
-                    scale = item.grams / 100.0
-                    totals.kcal += catalog_food.kcal * scale
-                    totals.protein_g += catalog_food.protein_g * scale
-                    totals.fiber_g += catalog_food.fiber_g * scale
-                    totals.sodium_mg += catalog_food.sodium_mg * scale
-                    totals.caffeine_mg += catalog_food.caffeine_mg * scale
-                    if catalog_food.is_vegetable:
-                        totals.veg_g += item.grams
+        fold_meal_into_totals(session, totals, meal)
     intake = session.scalars(select(IntakeEvent).where(
         IntakeEvent.player_id == player_id, IntakeEvent.day == day)).all()
     for event in intake:
@@ -101,6 +108,33 @@ def fighter_stats_for_day(session: Session, player_id: str, day: date,
     yesterday = fighter_row(session, player_id, day - timedelta(days=1))
     stats = blend_with_yesterday(stats, _stats_from_row(yesterday) if yesterday else None, has_intake)
     return totals, stats
+
+
+STAT_NAMES = ("attack", "defense", "stamina", "speed", "focus", "recovery")
+
+
+def timeline(session: Session, player_id: str, day: date | None = None) -> list[dict]:
+    day = day or today()
+    meals = [meal for meal in session.scalars(select(Meal).where(Meal.player_id == player_id))
+             if meal.status == "confirmed" and meal.taken_at.date() == day]
+    meals.sort(key=lambda meal: meal.taken_at)
+
+    running = DayTotals()
+    entries = []
+    for meal in meals:
+        before_stats = fighter_from_totals(running)
+        before_kcal = running.kcal
+        eaten = fold_meal_into_totals(session, running, meal)
+        after_stats = fighter_from_totals(running)
+        entries.append({
+            "meal_id": meal.id,
+            "taken_at": meal.taken_at.isoformat() + "Z",
+            "kcal": round(running.kcal - before_kcal, 1),
+            "items": [{"label": label, "grams": round(grams, 1)} for label, grams in eaten],
+            "delta": {name: round(getattr(after_stats, name) - getattr(before_stats, name), 1)
+                      for name in STAT_NAMES},
+        })
+    return entries
 
 
 def compute_fighter(session: Session, player_id: str, day: date | None = None) -> Fighter:
