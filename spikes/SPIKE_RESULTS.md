@@ -36,8 +36,18 @@ Everything marked "not run" is written and ready to run on the team Mac.
 - Seeded DEMO league serves standings, tonight's card, fighters with reasons, quick
   matches with sugar crashes, and the arena page.
 - Swift battle simulation compiled and matched Python exactly.
-- The Swift API layer (`Models`, `MealeeAPI`, `LiveAPI`, `MockAPI`) compiled on Linux
-  against the JSON fixtures the server actually produced.
+- The Swift API layer (`Models`, `MealeeAPI`, `LiveAPI`, `MockAPI`) plus `AppState` and
+  `FightViewModel` compiled on Linux against the JSON fixtures the server actually
+  produced. Only the SwiftUI views, `MealReviewViewModel` (UIKit) and the Auth0 session
+  remain uncompiled; each was re-read line by line for compile errors.
+- The arena page driven in headless Chromium against the seeded server: standings
+  render, a quick match animates turn by turn with HP bars and the correct winner, a
+  Redis kill flips it to polling, it reconnects on its own when Redis returns, and the
+  next fight plays through the new socket. No page errors. Screenshots under the
+  session scratch directory.
+- Realtime through a Redis failover, end to end: an attached client is closed with 1012
+  within 0.2 s of Redis dying, POST /intake returns 200 in 10 ms during the outage, and
+  a fresh subscriber receives the first publish after the restart.
 
 ## Not verifiable here
 

@@ -51,3 +51,17 @@ open. Commit hashes refer to branch `claude/hopeful-mayer-q59x3p`.
   intake 200 during the outage, fresh subscriber receives after the restart).
 - Open: Redis Cloud and Atlas still unverified live. Nightly job assumes one worker
   (Railway runs one).
+
+## 2026-09-12, session 4: everything else
+
+- No external changes on the remote branch (only `claude/hopeful-mayer-q59x3p` exists,
+  tip was my previous commit). Redis work closed out and pushed.
+- Arena page verified in headless Chromium through a fight and a Redis failover, see
+  `spikes/SPIKE_RESULTS.md`. The only console 404 is the browser asking for
+  `/favicon.ico`; no route exists and none is needed on a projector.
+- `AppState` and `FightViewModel` compile on the Linux Swift toolchain (Observation is
+  available there). All seven SwiftUI views re-read for compile errors; none found, but
+  they remain uncompiled until Xcode.
+- Open, unchanged: spikes 1, 2, 4 need the Mac and photos; `fdc_id` values need the USDA
+  verify step; Redis Cloud and Atlas need a live check from a laptop; Auth0 callback and
+  logout URLs are still unset in the dashboard.
