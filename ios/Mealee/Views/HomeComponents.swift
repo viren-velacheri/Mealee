@@ -48,24 +48,18 @@ struct FighterSpriteView: View {
 
     var body: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { context in
-            let breath = 1 + 0.02 * sin(context.date.timeIntervalSinceReferenceDate * 1.6)
+            let time = context.date.timeIntervalSinceReferenceDate
+            let breath = 1 + 0.02 * sin(time * 1.6)
             ZStack {
                 Circle()
-                    .fill(RadialGradient(colors: [Palette.leaf.opacity(0.55), Palette.mint.opacity(0.0)], center: .center, startRadius: 10, endRadius: 110))
+                    .fill(RadialGradient(colors: [Palette.leaf.opacity(0.5), Palette.mint.opacity(0.0)],
+                                         center: .center, startRadius: 10, endRadius: 110))
                     .frame(width: 220, height: 220)
                     .scaleEffect(breath * (0.85 + stats.stamina / 400))
-                Capsule()
-                    .fill(LinearGradient(colors: [Palette.leaf, Palette.sage], startPoint: .top, endPoint: .bottom))
-                    .frame(width: 70 + stats.attack * 0.5, height: 96 + stats.stamina * 0.3)
-                    .overlay(Capsule().strokeBorder(.white.opacity(0.7), lineWidth: 1.5))
-                    .shadow(color: Palette.sage.opacity(0.35), radius: 14, y: 8)
-                    .offset(y: 24)
+                GroundShadow(width: 128).offset(y: 74)
+                SquiggleBody(emoji: emoji, limbWidth: 4 + min(stats.defense, 60) * 0.05,
+                             reach: 1 + min(stats.attack, 60) * 0.003, time: time)
                     .scaleEffect(breath)
-                Circle()
-                    .strokeBorder(Palette.sage.opacity(0.9), lineWidth: 3)
-                    .frame(width: 40 + stats.defense * 0.4, height: 40 + stats.defense * 0.4)
-                    .offset(x: 58, y: 18)
-                Text(emoji).font(.system(size: 64)).offset(y: -34).scaleEffect(breath)
             }
         }
         .frame(height: 210)

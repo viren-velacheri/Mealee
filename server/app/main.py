@@ -24,7 +24,7 @@ from app import foods as food_catalog
 from app import game, identity, nightly, portions
 from app.config import ARENA_HTML_PATH, UPLOAD_DIR
 from app.db import (CatalogFood, Fight, IntakeEvent, League, Meal, MealItem, Player,
-                    init_db, request_session)
+                    get_session, init_db, request_session)
 from app.foods import class_labels, food_classes, warn_if_no_usda
 from app.realtime import realtime
 
@@ -38,6 +38,11 @@ THUMBNAIL_PX = 112
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    arena_session = get_session()
+    try:
+        game.ensure_arena(arena_session)
+    finally:
+        arena_session.close()
     UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
     (UPLOAD_DIR / "thumbs").mkdir(exist_ok=True)
     warn_if_no_usda()
@@ -143,7 +148,7 @@ async def get_latest_fight(code: str, session: Session = Depends(request_session
 
 
 class JoinLeague(BaseModel):
-    league_code: str
+    league_code: str | None = None
     name: str
     emoji: str
     auth0_sub: str | None = None
@@ -151,7 +156,7 @@ class JoinLeague(BaseModel):
 
 @app.post("/players")
 def join_league(body: JoinLeague, session: Session = Depends(request_session)):
-    league = _league_or_404(session, body.league_code)
+    league = game.ensure_arena(session) if not body.league_code else _league_or_404(session, body.league_code)
     player = Player(id=str(uuid.uuid4()), league_id=league.code, name=body.name.strip()[:32],
                     emoji=body.emoji[:8], auth0_sub=body.auth0_sub)
     session.add(player)

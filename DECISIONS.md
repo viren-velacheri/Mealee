@@ -113,3 +113,9 @@ One line per non-obvious choice: what was chosen over what, and why.
   alone. It reads as one scene, which two glass panels never did.
 - A fighter is the food emoji with four squiggly limbs and nothing else. No body shape
   competes with the food, and a stroked sine wave costs one Path per limb.
+- There is one arena and everyone is dropped into it on entry. League codes, creating a
+  league and joining by code are gone from the app; the league table stays because
+  standings, the realtime channel and the projector page are keyed by code, but only
+  ARENA is ever created. Joining with no code is what the server now expects.
+- The home fighter and the arena fighter are one view, SquiggleBody. The capsule torso
+  and shield circle are gone: the food is the character, the limbs are the motion.

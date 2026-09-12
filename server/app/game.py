@@ -28,6 +28,20 @@ def week_start(day: date) -> date:
     return day - timedelta(days=day.weekday())
 
 
+ARENA_CODE = "ARENA"
+
+
+# Everyone plays in one arena. The league table stays because standings, the realtime
+# channel and the projector page are all keyed by code; there is simply only ever one.
+def ensure_arena(session: Session) -> League:
+    league = session.get(League, ARENA_CODE)
+    if league is None:
+        league = League(code=ARENA_CODE, name="Mealee Arena", week_start=week_start(today()))
+        session.add(league)
+        session.commit()
+    return league
+
+
 def new_league_code(session: Session) -> str:
     while True:
         code = "".join(random.choices(LEAGUE_CODE_ALPHABET, k=4))
