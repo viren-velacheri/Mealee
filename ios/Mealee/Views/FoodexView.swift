@@ -22,6 +22,10 @@ struct FoodexView: View {
                             Text("found this week").font(TypeScale.body).foregroundStyle(Palette.muted)
                         }
                         .padding(.top, 16)
+                        FoodexLeaderboard(players: appState.league?.players ?? [],
+                                          meId: appState.playerId)
+                            .padding(.horizontal, Layout.gutter)
+                            .padding(.top, 12)
                         LazyVGrid(columns: columns, spacing: 10) {
                             ForEach(Array(foodClassLabels.enumerated()), id: \.element) { index, label in
                                 FoodexTile(label: label, discovery: discoveries.discovered.first { $0.label == label },

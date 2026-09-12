@@ -124,3 +124,39 @@ struct WinnerBurst: View {
         .accessibilityHidden(true)
     }
 }
+
+// One rival, one tap. The whole row is the button so the target is the full width
+// rather than a card you have to aim at.
+struct RivalRow: View {
+    let player: LeaguePlayer
+    let busy: Bool
+    let fight: () -> Void
+
+    var body: some View {
+        Button(action: fight) {
+            HStack(spacing: 12) {
+                Text(player.emoji).font(.system(size: 34))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(player.name).font(TypeScale.heading).foregroundStyle(Palette.ink).lineLimit(1)
+                    if let fighter = player.fighter {
+                        Text("ATK \(Int(fighter.attack)) · DEF \(Int(fighter.defense)) · HP \(fighter.hpMax)")
+                            .font(TypeScale.caption).foregroundStyle(Palette.muted)
+                    } else {
+                        Text("no meals yet").font(TypeScale.caption).foregroundStyle(Palette.muted)
+                    }
+                }
+                Spacer(minLength: 8)
+                Label("Fight", systemImage: "bolt.fill")
+                    .font(TypeScale.label).foregroundStyle(Palette.ink)
+                    .padding(.horizontal, 14).padding(.vertical, 10)
+                    .background(Palette.leaf.opacity(0.55), in: Capsule())
+            }
+            .padding(.horizontal, 14).padding(.vertical, 12)
+            .frame(minHeight: 64)
+            .contentShape(Rectangle())
+        }
+        .disabled(busy)
+        .glassCard(tint: Palette.mint, padding: 0)
+        .accessibilityLabel("Fight \(player.name)")
+    }
+}

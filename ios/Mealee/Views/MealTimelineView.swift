@@ -11,7 +11,7 @@ struct MealTimelineView: View {
             if entries.isEmpty {
                 Notice(kind: .guidance, text: "Nothing logged yet. Meals and drinks land here with what they changed.")
             } else {
-                ForEach(Array(entries.enumerated()), id: \.element.id) { index, entry in
+                ForEach(Array(entries.reversed().enumerated()), id: \.element.id) { index, entry in
                     TimelineRow(entry: entry, isLast: index == entries.count - 1)
                 }
             }

@@ -3,8 +3,6 @@ import SwiftUI
 struct FightView: View {
     @Environment(AppState.self) private var appState
     @State private var viewModel = FightViewModel()
-    @State private var selectedId: String?
-    @State private var lift: CGFloat = 0
 
     var body: some View {
         ZStack {
@@ -34,62 +32,57 @@ struct FightView: View {
         return fight.a.playerId == playerId || fight.b.playerId == playerId
     }
 
+    // A vertical list, one tap to fight. The old horizontal card rail fought three
+    // gestures at once: its own scroll, a swipe-up-to-fight per card, and the tab swipe.
     private var picker: some View {
-        VStack(spacing: 18) {
-            Text("Choose a rival").font(TypeScale.display).foregroundStyle(Palette.ink).padding(.top, 8)
-            Text("Tap a card, then swipe it up into the ring").font(TypeScale.caption).foregroundStyle(Palette.muted)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 14) {
-                    ForEach(appState.opponents) { opponent in
-                        OpponentCard(player: opponent, selected: opponent.playerId == selectedId)
-                            .offset(y: opponent.playerId == selectedId ? lift : 0)
-                            .onTapGesture {
-                                Haptics.tap()
-                                withAnimation(Motion.bounce) { selectedId = opponent.playerId }
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 12) {
+                Text("Choose a rival").font(TypeScale.display).foregroundStyle(Palette.ink).padding(.top, 8)
+                Text("Tap anyone to fight them").font(TypeScale.caption).foregroundStyle(Palette.muted)
+
+                if appState.opponents.isEmpty {
+                    Notice(kind: .guidance, text: "Nobody else has entered the arena yet. Pull down to refresh.")
+                        .padding(.horizontal, Layout.gutter)
+                } else {
+                    VStack(spacing: 8) {
+                        ForEach(rivals) { rival in
+                            RivalRow(player: rival, busy: viewModel.isStarting) {
+                                Haptics.thud()
+                                Task { await start(against: rival.playerId) }
                             }
-                            .gesture(swipeUp(for: opponent))
+                        }
                     }
+                    .padding(.horizontal, Layout.gutter)
                 }
-                .padding(.horizontal, Layout.gutter).padding(.vertical, 30)
+
+                if let message = viewModel.errorMessage {
+                    Notice(kind: .problem, text: message).padding(.horizontal, Layout.gutter)
+                }
+
+                if appState.opponents.count > 1 {
+                    Button {
+                        guard let any = appState.opponents.randomElement()?.playerId else { return }
+                        Haptics.tap()
+                        Task { await start(against: any) }
+                    } label: {
+                        Label("Quick match", systemImage: "shuffle").primaryPill(filled: false)
+                    }
+                    .buttonStyle(Pressable())
+                    .disabled(viewModel.isStarting)
+                    .padding(.horizontal, Layout.gutter).padding(.top, 4)
+                }
             }
-            .frame(height: 260)
-            if appState.opponents.isEmpty {
-                Text("Nobody else in the league yet").font(TypeScale.body).foregroundStyle(Palette.muted)
-            }
-            Spacer()
-            if let message = viewModel.errorMessage {
-                Text(message).font(TypeScale.caption).foregroundStyle(Palette.muted)
-            }
-            Button {
-                guard let opponent = selectedId ?? appState.opponents.randomElement()?.playerId else { return }
-                Task { await start(against: opponent) }
-            } label: {
-                Label(selectedId == nil ? "Quick match" : "Fight", systemImage: "bolt.fill").primaryPill()
-            }
-            .buttonStyle(Pressable())
-            .disabled(appState.opponents.isEmpty || viewModel.isStarting)
-            .padding(.horizontal, Layout.gutter).padding(.bottom, 12)
+            .padding(.bottom, 20)
         }
         .overlay { if viewModel.isStarting { ProgressView().tint(Palette.leaf).scaleEffect(1.4) } }
         .refreshable { await appState.refresh() }
     }
 
-    private func swipeUp(for opponent: LeaguePlayer) -> some Gesture {
-        DragGesture()
-            .onChanged { value in
-                guard opponent.playerId == selectedId, value.translation.height < 0 else { return }
-                lift = 80 * tanh(value.translation.height / 80)
-            }
-            .onEnded { value in
-                guard opponent.playerId == selectedId else { return }
-                if value.translation.height < -90 {
-                    Haptics.success()
-                    withAnimation(Motion.snappy) { lift = -160 }
-                    Task { await start(against: opponent.playerId); lift = 0 }
-                } else {
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.45)) { lift = 0 }
-                }
-            }
+    // Strongest first, so the interesting fight is the one at the top.
+    private var rivals: [LeaguePlayer] {
+        appState.opponents.sorted {
+            ($0.fighter?.attack ?? 0) > ($1.fighter?.attack ?? 0)
+        }
     }
 
     private func start(against opponentId: String) async {
