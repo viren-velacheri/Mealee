@@ -37,7 +37,7 @@ struct FightView: View {
     private var picker: some View {
         VStack(spacing: 18) {
             Text("Choose a rival").font(TypeScale.display).foregroundStyle(Palette.ink).padding(.top, 8)
-            Text("Tap a card, then swipe it up into the ring").font(TypeScale.caption).foregroundStyle(Palette.slate)
+            Text("Tap a card, then swipe it up into the ring").font(TypeScale.caption).foregroundStyle(Palette.muted)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 14) {
                     ForEach(appState.opponents) { opponent in
@@ -54,11 +54,11 @@ struct FightView: View {
             }
             .frame(height: 260)
             if appState.opponents.isEmpty {
-                Text("Nobody else in the league yet").font(TypeScale.body).foregroundStyle(Palette.slate)
+                Text("Nobody else in the league yet").font(TypeScale.body).foregroundStyle(Palette.muted)
             }
             Spacer()
             if let message = viewModel.errorMessage {
-                Text(message).font(TypeScale.caption).foregroundStyle(Palette.slate)
+                Text(message).font(TypeScale.caption).foregroundStyle(Palette.muted)
             }
             Button {
                 guard let opponent = selectedId ?? appState.opponents.randomElement()?.playerId else { return }

@@ -19,7 +19,7 @@ struct FoodexView: View {
                             Text("\(discoveries.discovered.count) of \(discoveries.total)")
                                 .font(.system(size: 56, weight: .black, design: .rounded)).foregroundStyle(Palette.ink)
                                 .contentTransition(.numericText())
-                            Text("found this week").font(TypeScale.body).foregroundStyle(Palette.slate)
+                            Text("found this week").font(TypeScale.body).foregroundStyle(Palette.muted)
                         }
                         .padding(.top, 16)
                         LazyVGrid(columns: columns, spacing: 10) {
@@ -34,7 +34,7 @@ struct FoodexView: View {
                         .padding(Layout.gutter)
                         .onAppear { revealed = true }
                     } else if let errorMessage {
-                        Text(errorMessage).font(TypeScale.caption).foregroundStyle(Palette.slate).padding()
+                        Text(errorMessage).font(TypeScale.caption).foregroundStyle(Palette.muted).padding()
                     } else {
                         ProgressView().tint(Palette.leaf).padding(.top, 120)
                     }
@@ -42,7 +42,7 @@ struct FoodexView: View {
             }
             .navigationTitle("Foodex")
             .toolbarBackground(.hidden, for: .navigationBar)
-            .toolbar { Button("Done") { Haptics.tap(); dismiss() }.font(TypeScale.label).foregroundStyle(Palette.sage) }
+            .toolbar { Button("Done") { Haptics.tap(); dismiss() }.font(TypeScale.label).foregroundStyle(Palette.muted) }
             .task { await load() }
         }
     }
@@ -80,7 +80,7 @@ struct FoodexTile: View {
                 }
             }
             .frame(height: 62)
-            Text(label).font(.system(size: 9, weight: .semibold, design: .rounded)).lineLimit(1)
+            Text(label).font(Font.system(.caption2, design: .rounded).weight(.semibold)).lineLimit(1)
                 .foregroundStyle(discovery == nil ? Palette.slate : Palette.ink)
         }
     }

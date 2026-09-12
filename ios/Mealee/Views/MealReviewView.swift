@@ -56,7 +56,7 @@ struct MealReviewView: View {
                     Spacer()
                 }
                 if let message = viewModel.errorMessage {
-                    Text(message).font(TypeScale.caption).foregroundStyle(Palette.slate)
+                    Text(message).font(TypeScale.caption).foregroundStyle(Palette.muted)
                 }
             }
             .padding(Layout.gutter)
@@ -113,19 +113,19 @@ struct MealItemList: View {
                                     Text(item.label).font(TypeScale.heading).foregroundStyle(Palette.ink)
                                     if item.isNew { Pill(text: "new", tint: Palette.leaf) }
                                 }
-                                Text("tap to edit").font(TypeScale.caption).foregroundStyle(Palette.slate)
+                                Text("tap to edit").font(TypeScale.caption).foregroundStyle(Palette.muted)
                             }
                             Spacer()
                             VStack(alignment: .trailing, spacing: 0) {
                                 Text("≈ \(Int(item.grams + 0.5)) g").font(TypeScale.bigNumber).foregroundStyle(Palette.ink).contentTransition(.numericText())
-                                Text("\(Int(item.gramsLow + 0.5)) to \(Int(item.gramsHigh + 0.5)) g").font(TypeScale.caption).foregroundStyle(Palette.slate)
-                                if showDetails { Text("\(Int(item.confidence * 100))% sure").font(TypeScale.caption).foregroundStyle(Palette.slate) }
+                                Text("\(Int(item.gramsLow + 0.5)) to \(Int(item.gramsHigh + 0.5)) g").font(TypeScale.caption).foregroundStyle(Palette.muted)
+                                if showDetails { Text("\(Int(item.confidence * 100))% sure").font(TypeScale.caption).foregroundStyle(Palette.muted) }
                             }
                         }
                     }
                     .buttonStyle(Pressable())
                     Button(role: .destructive) { Haptics.thud(); remove(item) } label: {
-                        Image(systemName: "trash").font(TypeScale.heading).foregroundStyle(Palette.slate)
+                        Image(systemName: "trash").font(TypeScale.heading).foregroundStyle(Palette.muted)
                             .padding(10).contentShape(Rectangle())
                     }
                     .accessibilityLabel("Remove \(item.label)")
@@ -137,7 +137,7 @@ struct MealItemList: View {
                         Text(showDetails ? "Scale: \(meal.scale.type), \(String(format: "%.2f", meal.scale.pxPerMm)) px per mm" : "Details")
                         Image(systemName: showDetails ? "chevron.up" : "chevron.down")
                     }
-                    .font(TypeScale.caption).foregroundStyle(Palette.slate)
+                    .font(TypeScale.caption).foregroundStyle(Palette.muted)
                 }
             }
         }

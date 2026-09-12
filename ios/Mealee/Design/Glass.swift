@@ -93,21 +93,32 @@ struct FieldLabel: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            Text(text).font(TypeScale.label).foregroundStyle(Palette.sage)
-            if required { Text("required").font(TypeScale.caption).foregroundStyle(Palette.slate) }
+            Text(text).font(TypeScale.label).foregroundStyle(Palette.muted)
+            if required { Text("required").font(TypeScale.caption).foregroundStyle(Palette.muted) }
         }
     }
 }
 
 struct AuroraBackground: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { context in
-            let seconds = Float(context.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 3600))
-            Rectangle()
-                .fill(Palette.mist)
-                .colorEffect(ShaderLibrary.aurora(.float(seconds), .boundingRect))
+        Group {
+            if reduceMotion {
+                // Still the aurora, just held at one frame: this runs behind every screen.
+                Rectangle().fill(Palette.mist)
+                    .colorEffect(ShaderLibrary.aurora(.float(0), .boundingRect))
+            } else {
+                TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { context in
+                    let seconds = Float(context.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 3600))
+                    Rectangle()
+                        .fill(Palette.mist)
+                        .colorEffect(ShaderLibrary.aurora(.float(seconds), .boundingRect))
+                }
+            }
         }
         .ignoresSafeArea()
+        .accessibilityHidden(true)
     }
 }
 

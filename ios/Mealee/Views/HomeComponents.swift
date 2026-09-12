@@ -117,7 +117,7 @@ struct IntakeChips: View {
                     .animation(Motion.bounce, value: bounce)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(title).font(TypeScale.heading).foregroundStyle(Palette.ink)
-                    Text(subtitle).font(TypeScale.caption).foregroundStyle(Palette.slate)
+                    Text(subtitle).font(TypeScale.caption).foregroundStyle(Palette.muted)
                 }
                 Spacer()
             }

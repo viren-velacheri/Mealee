@@ -9,7 +9,7 @@ struct StatMeter: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
             HStack(alignment: .firstTextBaseline) {
-                Text(name).font(TypeScale.label).foregroundStyle(Palette.slate)
+                Text(name).font(TypeScale.label).foregroundStyle(Palette.muted)
                 Spacer()
                 Text(display).font(TypeScale.number).foregroundStyle(Palette.ink).contentTransition(.numericText())
             }

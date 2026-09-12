@@ -119,3 +119,9 @@ One line per non-obvious choice: what was chosen over what, and why.
   ARENA is ever created. Joining with no code is what the server now expects.
 - The home fighter and the arena fighter are one view, SquiggleBody. The capsule torso
   and shield circle are gone: the food is the character, the limbs are the motion.
+- Type tokens are anchored to text styles rather than point sizes, so the whole app
+  grows with Dynamic Type. Nothing scaled before: every label was Font.system(size:),
+  which is fixed by definition.
+- Palette.sage and Palette.slate stay as fills and never carry text. Measured against
+  the glass card they sit at 2.14:1 and 2.98:1, well under AA; Palette.muted, ink at
+  62%, reads as the same family at about 4.9:1.

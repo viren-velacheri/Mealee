@@ -118,5 +118,6 @@ struct GroundShadow: View {
             .fill(RadialGradient(colors: [Palette.sage.opacity(0.35), .clear],
                                  center: .center, startRadius: 2, endRadius: width * 0.6))
             .frame(width: width, height: width * 0.26)
+            .accessibilityHidden(true)
     }
 }

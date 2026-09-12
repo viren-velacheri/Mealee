@@ -25,7 +25,7 @@ struct JoinView: View {
                         Notice(kind: .guidance, text: "Offline mode: fighters and rivals come from fixtures.")
                     }
                     if APIConfig.auth0Enabled {
-                        Button("Log out") { auth.logout() }.font(TypeScale.caption).foregroundStyle(Palette.slate)
+                        Button("Log out") { auth.logout() }.font(TypeScale.caption).foregroundStyle(Palette.muted)
                     }
                 }
                 .buttonStyle(Pressable())
@@ -42,7 +42,7 @@ struct JoinView: View {
         VStack(spacing: 6) {
             Text("Who's fighting?").font(TypeScale.display).foregroundStyle(Palette.ink)
             Text("Name yourself and pick a face. Everyone fights in the same arena.")
-                .font(TypeScale.caption).foregroundStyle(Palette.sage).multilineTextAlignment(.center)
+                .font(TypeScale.caption).foregroundStyle(Palette.muted).multilineTextAlignment(.center)
         }
         .padding(.top, 30)
     }
@@ -65,7 +65,7 @@ struct JoinView: View {
                     Button { showingCustomEmoji = true } label: {
                         VStack(spacing: 2) {
                             Text(emojiChoices.contains(emoji) ? "+" : emoji).font(.system(size: 30, weight: .medium))
-                            Text("custom").font(.system(size: 9, weight: .semibold, design: .rounded))
+                            Text("custom").font(Font.system(.caption2, design: .rounded).weight(.semibold))
                         }
                         .foregroundStyle(Palette.ink).frame(width: 50, height: 50)
                         .background(emojiChoices.contains(emoji) ? .clear : Palette.leaf.opacity(0.5), in: Circle())

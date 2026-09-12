@@ -2,6 +2,7 @@ import CoreImage.CIFilterBuiltins
 import SwiftUI
 
 struct LeagueView: View {
+    @State private var confirmingLeave = false
     @Environment(AppState.self) private var appState
 
     var body: some View {
@@ -13,12 +14,12 @@ struct LeagueView: View {
                         VStack(spacing: 10) {
                             Text(league.code).font(.system(size: 64, weight: .black, design: .rounded)).tracking(10)
                                 .foregroundStyle(Palette.ink).padding(.leading, 10)
-                            Text(league.name).font(TypeScale.body).foregroundStyle(Palette.slate)
+                            Text(league.name).font(TypeScale.body).foregroundStyle(Palette.muted)
                             if let qr = QRCode.image(for: "mealee://join/\(league.code)") {
                                 Image(uiImage: qr).interpolation(.none).resizable().frame(width: 140, height: 140)
                                     .padding(8).background(Palette.mist, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                             }
-                            Text("Type the code or scan to join").font(TypeScale.caption).foregroundStyle(Palette.slate)
+                            Text("Type the code or scan to join").font(TypeScale.caption).foregroundStyle(Palette.muted)
                         }
                         .frame(maxWidth: .infinity)
                         .glassCard(tint: Palette.leaf)
@@ -32,7 +33,7 @@ struct LeagueView: View {
                                 HStack {
                                     Text("\(matchup.a.emoji) \(matchup.a.name)").font(TypeScale.body).foregroundStyle(Palette.ink)
                                     Spacer()
-                                    Text("vs").font(TypeScale.label).foregroundStyle(Palette.slate)
+                                    Text("vs").font(TypeScale.label).foregroundStyle(Palette.muted)
                                     Spacer()
                                     Text(matchup.b.map { "\($0.emoji) \($0.name)" } ?? "bye").font(TypeScale.body).foregroundStyle(Palette.ink)
                                 }
@@ -43,14 +44,22 @@ struct LeagueView: View {
                                 HStack {
                                     Text("\(player.emoji) \(player.name)").font(TypeScale.body).foregroundStyle(Palette.ink)
                                     Spacer()
-                                    Text("\(player.discovered) of \(foodClassLabels.count)").font(TypeScale.number).foregroundStyle(Palette.slate)
+                                    Text("\(player.discovered) of \(foodClassLabels.count)").font(TypeScale.number).foregroundStyle(Palette.muted)
                                 }
                             }
                         }
-                        Button { Haptics.tap(); appState.leave() } label: {
-                            Text("Leave league").font(TypeScale.caption).foregroundStyle(Palette.slate)
+                        Button(role: .destructive) { Haptics.tap(); confirmingLeave = true } label: {
+                            Text("Leave the arena").font(TypeScale.caption)
+                                .frame(minWidth: 44, minHeight: 44)
+                                .contentShape(Rectangle())
                         }
                         .padding(.top, 8)
+                        .confirmationDialog("Leave the arena?", isPresented: $confirmingLeave, titleVisibility: .visible) {
+                            Button("Leave", role: .destructive) { appState.leave() }
+                            Button("Stay", role: .cancel) { }
+                        } message: {
+                            Text("Your fighter and today's meals stay on the server, but this phone forgets who you are.")
+                        }
                     }
                     .padding(Layout.gutter)
                 } else {
@@ -87,7 +96,7 @@ struct StandingRow: View {
             Spacer()
             VStack(alignment: .trailing, spacing: 0) {
                 Text("\(standing.wins) W").font(TypeScale.number).foregroundStyle(Palette.ink).contentTransition(.numericText())
-                Text("\(standing.damage) dmg").font(TypeScale.caption).foregroundStyle(Palette.slate)
+                Text("\(standing.damage) dmg").font(TypeScale.caption).foregroundStyle(Palette.muted)
             }
         }
         .padding(.vertical, 4)

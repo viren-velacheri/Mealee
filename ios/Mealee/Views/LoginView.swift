@@ -10,7 +10,7 @@ struct LoginView: View {
                 Spacer()
                 FighterSpriteView(stats: .empty, emoji: "🍽️")
                 Text("Mealee").font(TypeScale.display).foregroundStyle(Palette.ink)
-                Text("Your meals become your fighter.").font(TypeScale.body).foregroundStyle(Palette.slate)
+                Text("Your meals become your fighter.").font(TypeScale.body).foregroundStyle(Palette.muted)
                 Spacer()
                 VStack(spacing: 12) {
                     if auth.isLoading {
@@ -20,7 +20,7 @@ struct LoginView: View {
                         Button { Haptics.tap(); auth.login() } label: { Text("Log in").primaryPill(filled: false) }
                     }
                     if let message = auth.errorMessage {
-                        Text(message).font(TypeScale.caption).foregroundStyle(Palette.slate).multilineTextAlignment(.center)
+                        Text(message).font(TypeScale.caption).foregroundStyle(Palette.muted).multilineTextAlignment(.center)
                     }
                 }
                 .buttonStyle(Pressable())

@@ -42,7 +42,7 @@ struct AvatarPicker: View {
                 Button { showingCustomEmoji = true } label: {
                     VStack(spacing: 2) {
                         Text(choices.contains(emoji) ? "+" : emoji).font(.system(size: 30, weight: .medium))
-                        Text("custom").font(.system(size: 9, weight: .semibold, design: .rounded))
+                        Text("custom").font(Font.system(.caption2, design: .rounded).weight(.semibold))
                     }
                     .foregroundStyle(Palette.ink).frame(width: 50, height: 50)
                     .background(choices.contains(emoji) ? .clear : Palette.leaf.opacity(0.5), in: Circle())

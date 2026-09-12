@@ -28,14 +28,14 @@ private struct TimelineRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             VStack(spacing: 0) {
-                Text(clockTime).font(TypeScale.caption).foregroundStyle(Palette.slate)
+                Text(clockTime).font(TypeScale.caption).foregroundStyle(Palette.muted)
                     .frame(width: 52, alignment: .trailing)
                 Spacer(minLength: 0)
             }
             spine
             VStack(alignment: .leading, spacing: 6) {
                 Text(foods).font(TypeScale.body).foregroundStyle(Palette.ink)
-                Text("\(Int(entry.kcal.rounded())) kcal").font(TypeScale.caption).foregroundStyle(Palette.slate)
+                Text("\(Int(entry.kcal.rounded())) kcal").font(TypeScale.caption).foregroundStyle(Palette.muted)
                 if !entry.delta.risen.isEmpty {
                     // A meal can move all six stats, so the chips scroll rather than squeeze.
                     ScrollView(.horizontal, showsIndicators: false) {

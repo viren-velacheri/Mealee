@@ -15,7 +15,7 @@ struct OpponentCard: View {
                     mini("HP", fighter.hpMax)
                 }
             } else {
-                Text("no meals yet").font(TypeScale.caption).foregroundStyle(Palette.slate)
+                Text("no meals yet").font(TypeScale.caption).foregroundStyle(Palette.muted)
             }
         }
         .frame(width: 150)
@@ -29,7 +29,7 @@ struct OpponentCard: View {
     private func mini(_ label: String, _ value: Int) -> some View {
         VStack(spacing: 0) {
             Text("\(value)").font(TypeScale.number).foregroundStyle(Palette.ink)
-            Text(label).font(.system(size: 9, weight: .bold, design: .rounded)).foregroundStyle(Palette.slate)
+            Text(label).font(Font.system(.caption2, design: .rounded).weight(.bold)).foregroundStyle(Palette.muted)
         }
     }
 }
@@ -81,7 +81,7 @@ struct TurnRow: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
-            Text("t\(turn.turn)").font(TypeScale.label).foregroundStyle(Palette.slate).frame(width: 26, alignment: .trailing)
+            Text("t\(turn.turn)").font(TypeScale.label).foregroundStyle(Palette.muted).frame(width: 26, alignment: .trailing)
             RoundedRectangle(cornerRadius: 2).fill(turn.actor == "a" ? Palette.leaf : Palette.sage).frame(width: 3, height: 18)
             if streams {
                 StreamingText(text: turn.note, charactersPerSecond: 80)
@@ -121,5 +121,6 @@ struct WinnerBurst: View {
             .opacity(elapsed < 1.3 ? 1 : 0)
         }
         .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 }

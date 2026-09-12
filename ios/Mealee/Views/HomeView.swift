@@ -26,7 +26,9 @@ struct HomeView: View {
                                 withAnimation(Motion.bounce) { showReasons.toggle() }
                             } label: {
                                 Label(showReasons ? "Hide why" : "Why", systemImage: "sparkles")
-                                    .font(TypeScale.label).foregroundStyle(Palette.sage)
+                                    .font(TypeScale.label).foregroundStyle(Palette.muted)
+                                    .frame(minWidth: 44, minHeight: 44, alignment: .trailing)
+                                    .contentShape(Rectangle())
                             }
                         }
                         StatMeters(stats: appState.fighter)
@@ -38,7 +40,7 @@ struct HomeView: View {
                     IntakeChips()
                     MealTimelineView(entries: appState.timeline)
                     if let message = appState.errorMessage {
-                        Text(message).font(TypeScale.caption).foregroundStyle(Palette.slate).multilineTextAlignment(.center)
+                        Text(message).font(TypeScale.caption).foregroundStyle(Palette.muted).multilineTextAlignment(.center)
                     }
                 }
                 .padding(Layout.gutter)
@@ -48,7 +50,7 @@ struct HomeView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button { Haptics.tap(); showFoodex = true } label: {
-                    Image(systemName: "book.closed.fill").foregroundStyle(Palette.sage)
+                    Image(systemName: "book.closed.fill").foregroundStyle(Palette.muted)
                 }
                 .accessibilityLabel("Foodex")
             }

@@ -10,6 +10,9 @@ enum Palette {
     // The five swatches are all light. Text needs one deep tone; this is sage taken
     // down to 15% lightness so it still reads as part of the same family.
     static let ink = Color(hex: 0x1E2A22)
+    // Secondary text. Reads as the same family but clears AA on glass, where sage
+    // measured 2.14:1 and slate 2.98:1.
+    static let muted = Color(hex: 0x1E2A22).opacity(0.62)
 
     static let attack: [Color] = [leaf, sage]
     static let defense: [Color] = [sage, slate]
@@ -20,14 +23,16 @@ enum Palette {
 }
 
 enum TypeScale {
-    static let display = Font.system(size: 40, weight: .bold, design: .rounded)
-    static let title = Font.system(size: 26, weight: .bold, design: .rounded)
-    static let heading = Font.system(size: 18, weight: .semibold, design: .rounded)
-    static let body = Font.system(size: 16, weight: .regular)
-    static let label = Font.system(size: 13, weight: .semibold, design: .rounded)
-    static let number = Font.system(size: 15, weight: .bold, design: .rounded).monospacedDigit()
-    static let bigNumber = Font.system(size: 34, weight: .bold, design: .rounded).monospacedDigit()
-    static let caption = Font.system(size: 12, weight: .medium)
+    // Anchored to text styles, not point sizes, so every label grows with Dynamic Type.
+    // The paired size is what each one measures at the default setting.
+    static let display = Font.system(.largeTitle, design: .rounded).weight(.bold)      // 34
+    static let title = Font.system(.title, design: .rounded).weight(.bold)             // 28
+    static let heading = Font.system(.headline, design: .rounded)                      // 17
+    static let body = Font.system(.callout)                                            // 16
+    static let label = Font.system(.footnote, design: .rounded).weight(.semibold)      // 13
+    static let number = Font.system(.subheadline, design: .rounded).weight(.bold).monospacedDigit()
+    static let bigNumber = Font.system(.largeTitle, design: .rounded).weight(.bold).monospacedDigit()
+    static let caption = Font.system(.caption).weight(.medium)                         // 12
 }
 
 enum Layout {

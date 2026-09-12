@@ -25,7 +25,7 @@ struct FoodSearchSheet: View {
                         HStack {
                             TextField("50", text: $viewModel.gramsText)
                                 .keyboardType(.decimalPad).font(TypeScale.heading)
-                            Text("grams").foregroundStyle(Palette.slate)
+                            Text("grams").foregroundStyle(Palette.muted)
                         }
                     }
                     Section("Matches") {
@@ -37,14 +37,14 @@ struct FoodSearchSheet: View {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(food.label).font(TypeScale.heading).foregroundStyle(Palette.ink)
                                     Text("\(Int(food.kcal.rounded())) kcal · \(food.proteinG, specifier: "%.1f") g protein per 100 g")
-                                        .font(TypeScale.caption).foregroundStyle(Palette.slate)
-                                    Text(food.source).font(TypeScale.caption).foregroundStyle(Palette.sage)
+                                        .font(TypeScale.caption).foregroundStyle(Palette.muted)
+                                    Text(food.source).font(TypeScale.caption).foregroundStyle(Palette.muted)
                                 }
                             }
                             .disabled(viewModel.grams == nil || isSaving)
                         }
                         if let message = viewModel.errorMessage {
-                            Text(message).font(TypeScale.caption).foregroundStyle(Palette.slate)
+                            Text(message).font(TypeScale.caption).foregroundStyle(Palette.muted)
                         }
                     }
                 }
