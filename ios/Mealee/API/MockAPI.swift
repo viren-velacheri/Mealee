@@ -176,11 +176,16 @@ final class MockAPI: MealeeAPI {
         discovered[draft.playerId, default: []] += items
             .filter { freshLabels.contains($0.label) }
             .map { Discovery(label: $0.label, thumbnailUrl: "plate_fixture.jpg") }
+        let totals = confirmed.dayTotals
         confirmedTimeline.append(TimelineEntry(
-            mealId: mealId,
+            entryId: "meal-\(mealId)",
+            kind: "meal",
+            label: items.map { "\($0.label) \(Int($0.grams.rounded()))g" }.joined(separator: ", "),
             takenAt: ISO8601DateFormatter().string(from: Date()),
-            kcal: confirmed.dayTotals.kcal,
             items: items.map { TimelineItem(label: $0.label, grams: $0.grams) },
+            nutrients: Nutrients(kcal: totals.kcal, proteinG: totals.proteinG, fiberG: totals.fiberG,
+                                 vegG: totals.vegG, caffeineMg: totals.caffeineMg,
+                                 waterMl: totals.waterMl, sodiumMg: totals.sodiumMg),
             delta: StatDelta(attack: confirmed.fighter.attack, defense: confirmed.fighter.defense,
                              stamina: confirmed.fighter.stamina, speed: confirmed.fighter.speed,
                              focus: confirmed.fighter.focus, recovery: confirmed.fighter.recovery)))

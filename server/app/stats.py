@@ -67,8 +67,14 @@ def _clamp(value: float, low: float = 0.0, high: float = 100.0) -> float:
     return max(low, min(high, value))
 
 
+# An unfed fighter still throws a punch. Damage is attack * (200 - defense) / 200, so a
+# zero here makes every hit land for nothing and a fight reads as broken rather than
+# one-sided. Eight against a hundred keeps meals firmly in charge of the outcome.
+UNFED_ATTACK = 8.0
+
+
 def fighter_from_totals(totals: DayTotals) -> FighterStats:
-    attack = 100 * min(totals.protein_g / TARGET_PROTEIN_G, 1) ** 0.8
+    attack = max(UNFED_ATTACK, 100 * min(totals.protein_g / TARGET_PROTEIN_G, 1) ** 0.8)
     defense = 60 * min(totals.veg_g / TARGET_VEG_G, 1) + 40 * min(totals.fiber_g / TARGET_FIBER_G, 1)
     stamina = 100 * max(0.0, 1 - abs(totals.kcal / TARGET_KCAL - 1))
     speed = 50 + min(totals.added_sugar_g, 50)

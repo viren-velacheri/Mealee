@@ -102,9 +102,10 @@ async def search_usda(query: str) -> list[FoodSearchResult]:
         "dataType": "Foundation,SR Legacy,Survey (FNDDS)",
     }
     # FoodData Central's edge answers a well-formed request with an nginx 400 on roughly
-    # one call in three, at random. Three attempts take a miss from a third to about 4%.
+    # one call in three, at random, measured over 24 calls. Five attempts take a miss
+    # from a third to about one in two hundred, and each retry costs ~150ms.
     async with httpx.AsyncClient(timeout=5) as client:
-        for attempt in range(3):
+        for attempt in range(5):
             response = await client.get(f"{USDA_API_URL}/foods/search", params=params)
             if response.status_code == httpx.codes.OK:
                 break

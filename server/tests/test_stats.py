@@ -1,9 +1,13 @@
-from app.stats import DayTotals, blend_with_yesterday, fighter_from_totals
+import pytest
+from app.stats import UNFED_ATTACK, DayTotals, blend_with_yesterday, fighter_from_totals
 
 
 def test_empty_day_is_weak_but_never_zero_hp():
     fighter = fighter_from_totals(DayTotals())
-    assert fighter.attack == 0
+    # Weak, but able to land a hit: a zero here makes every blow deal no damage and the
+    # fight reads as broken rather than one-sided.
+    assert fighter.attack == UNFED_ATTACK
+    assert fighter.attack < 10
     assert fighter.stamina == 0
     assert fighter.hp_max == 100
     assert fighter.speed == 50
@@ -61,4 +65,5 @@ def test_no_meals_today_fights_at_a_fifth_of_yesterday():
 def test_carry_over_is_eighty_twenty():
     yesterday = fighter_from_totals(DayTotals(protein_g=100))
     today = blend_with_yesterday(fighter_from_totals(DayTotals(protein_g=0)), yesterday, has_meals_today=True)
-    assert today.attack == 20
+    # 20% of yesterday's 100, plus 80% of today's unfed floor.
+    assert today.attack == pytest.approx(0.2 * yesterday.attack + 0.8 * UNFED_ATTACK)

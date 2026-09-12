@@ -220,20 +220,46 @@ let foodClassEmoji: [String: String] = [
     "noodles": "🍜", "cheese": "🧀", "coffee": "☕",
 ]
 
-// One confirmed meal and the stat change it caused, oldest first.
+// One thing the player consumed and what it moved, oldest first. A meal or a drink.
 struct TimelineEntry: Codable, Equatable, Identifiable {
-    let mealId: String
+    let entryId: String
+    let kind: String
+    let label: String
     let takenAt: String
-    let kcal: Double
     let items: [TimelineItem]
+    let nutrients: Nutrients
     let delta: StatDelta
 
-    var id: String { mealId }
+    var id: String { entryId }
+    var isDrink: Bool { kind == "drink" }
 }
 
 struct TimelineItem: Codable, Equatable {
     let label: String
     let grams: Double
+}
+
+struct Nutrients: Codable, Equatable {
+    let kcal: Double
+    let proteinG: Double
+    let fiberG: Double
+    let vegG: Double
+    let caffeineMg: Double
+    let waterMl: Double
+    let sodiumMg: Double
+
+    // Only what this entry actually contributed, in the order a plate reads.
+    var summary: [(String, String)] {
+        var parts: [(String, String)] = []
+        if kcal >= 1 { parts.append(("kcal", "\(Int(kcal.rounded()))")) }
+        if proteinG >= 0.5 { parts.append(("protein", "\(Int(proteinG.rounded()))g")) }
+        if fiberG >= 0.5 { parts.append(("fiber", "\(Int(fiberG.rounded()))g")) }
+        if vegG >= 1 { parts.append(("veg", "\(Int(vegG.rounded()))g")) }
+        if caffeineMg >= 1 { parts.append(("caffeine", "\(Int(caffeineMg.rounded()))mg")) }
+        if waterMl >= 1 { parts.append(("water", "\(Int(waterMl.rounded()))ml")) }
+        if sodiumMg >= 1 { parts.append(("sodium", "\(Int(sodiumMg.rounded()))mg")) }
+        return parts
+    }
 }
 
 struct StatDelta: Codable, Equatable {

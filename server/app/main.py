@@ -102,7 +102,8 @@ async def search_foods(q: str, session: Session = Depends(request_session)):
             log.warning("USDA food search failed; returning local matches: %s", error)
             return {"items": [result.as_dict() for result in local_results]}
         raise HTTPException(status_code=503, detail={
-            "error": "food search unavailable", "hint": "check the server connection and try again",
+            "error": "no match for that food",
+            "hint": "It is not in the local catalog and the USDA lookup did not answer. Try again, or a simpler word.",
         })
 
     for result in usda_results:

@@ -111,26 +111,50 @@ def fighter_stats_for_day(session: Session, player_id: str, day: date,
 
 
 STAT_NAMES = ("attack", "defense", "stamina", "speed", "focus", "recovery")
+NUTRIENT_NAMES = ("kcal", "protein_g", "fiber_g", "veg_g", "caffeine_mg", "water_ml", "sodium_mg")
 
 
 def timeline(session: Session, player_id: str, day: date | None = None) -> list[dict]:
+    """The day in order: meals and drinks, each with what it added and what it moved."""
     day = day or today()
     meals = [meal for meal in session.scalars(select(Meal).where(Meal.player_id == player_id))
              if meal.status == "confirmed" and meal.taken_at.date() == day]
-    meals.sort(key=lambda meal: meal.taken_at)
+    drinks = session.scalars(select(IntakeEvent).where(
+        IntakeEvent.player_id == player_id, IntakeEvent.day == day)).all()
+
+    events = ([(meal.taken_at, "meal", meal) for meal in meals]
+              + [(drink.created_at, "drink", drink) for drink in drinks])
+    events.sort(key=lambda event: event[0])
 
     running = DayTotals()
     entries = []
-    for meal in meals:
+    for when, kind, row in events:
         before_stats = fighter_from_totals(running)
-        before_kcal = running.kcal
-        eaten = fold_meal_into_totals(session, running, meal)
+        before = running.as_dict()
+
+        if kind == "meal":
+            eaten = fold_meal_into_totals(session, running, row)
+            label = ", ".join(f"{label} {grams:.0f}g" for label, grams in eaten) or "meal"
+            items = [{"label": label, "grams": round(grams, 1)} for label, grams in eaten]
+        else:
+            if row.kind == "water":
+                running.water_ml += WATER_ML_PER_PRESET
+            else:
+                running.caffeine_mg += COFFEE_MG_PER_PRESET
+                running.water_ml += WATER_ML_PER_PRESET
+            label = "Water" if row.kind == "water" else "Coffee"
+            items = []
+
+        after = running.as_dict()
         after_stats = fighter_from_totals(running)
         entries.append({
-            "meal_id": meal.id,
-            "taken_at": meal.taken_at.isoformat() + "Z",
-            "kcal": round(running.kcal - before_kcal, 1),
-            "items": [{"label": label, "grams": round(grams, 1)} for label, grams in eaten],
+            "entry_id": f"{kind}-{row.id}",
+            "kind": kind,
+            "label": label,
+            "taken_at": when.isoformat() + "Z",
+            "items": items,
+            "nutrients": {name: round(after.get(name, 0) - before.get(name, 0), 1)
+                          for name in NUTRIENT_NAMES},
             "delta": {name: round(getattr(after_stats, name) - getattr(before_stats, name), 1)
                       for name in STAT_NAMES},
         })

@@ -7,9 +7,9 @@ struct MealTimelineView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Today's meals").font(TypeScale.heading).foregroundStyle(Palette.ink)
+            Text("Today").font(TypeScale.heading).foregroundStyle(Palette.ink)
             if entries.isEmpty {
-                Notice(kind: .guidance, text: "No meals yet. Log one and it lands here with what it changed.")
+                Notice(kind: .guidance, text: "Nothing logged yet. Meals and drinks land here with what they changed.")
             } else {
                 ForEach(Array(entries.enumerated()), id: \.element.id) { index, entry in
                     TimelineRow(entry: entry, isLast: index == entries.count - 1)
@@ -34,8 +34,11 @@ private struct TimelineRow: View {
             }
             spine
             VStack(alignment: .leading, spacing: 6) {
-                Text(foods).font(TypeScale.body).foregroundStyle(Palette.ink)
-                Text("\(Int(entry.kcal.rounded())) kcal").font(TypeScale.caption).foregroundStyle(Palette.muted)
+                Text(entry.label).font(TypeScale.body).foregroundStyle(Palette.ink)
+                if !entry.nutrients.summary.isEmpty {
+                    Text(entry.nutrients.summary.map { "\($0.1) \($0.0)" }.joined(separator: " · "))
+                        .font(TypeScale.caption).foregroundStyle(Palette.muted)
+                }
                 if !entry.delta.risen.isEmpty {
                     // A meal can move all six stats, so the chips scroll rather than squeeze.
                     ScrollView(.horizontal, showsIndicators: false) {
@@ -59,16 +62,12 @@ private struct TimelineRow: View {
 
     private var spine: some View {
         VStack(spacing: 0) {
-            Circle().fill(Palette.leaf).frame(width: 10, height: 10)
+            Circle().fill(entry.isDrink ? Palette.slate : Palette.leaf).frame(width: 10, height: 10)
             if !isLast {
                 Rectangle().fill(Palette.mint).frame(width: 2).frame(maxHeight: .infinity)
             }
         }
         .frame(width: 10)
-    }
-
-    private var foods: String {
-        entry.items.map { "\($0.label) \(Int($0.grams.rounded()))g" }.joined(separator: ", ")
     }
 
     private var clockTime: String {
