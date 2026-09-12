@@ -94,8 +94,16 @@ extension AnyTransition {
     }
 }
 
+// The generators are held for the life of the app. A generator released right after
+// impactOccurred() leaves UIKit with no running engine and the tap is dropped; priming
+// after each hit keeps the engine warm for the next one.
+@MainActor
 enum Haptics {
-    static func tap() { UIImpactFeedbackGenerator(style: .light).impactOccurred() }
-    static func thud() { UIImpactFeedbackGenerator(style: .rigid).impactOccurred() }
-    static func success() { UINotificationFeedbackGenerator().notificationOccurred(.success) }
+    private static let light = UIImpactFeedbackGenerator(style: .light)
+    private static let rigid = UIImpactFeedbackGenerator(style: .rigid)
+    private static let notification = UINotificationFeedbackGenerator()
+
+    static func tap() { light.impactOccurred(); light.prepare() }
+    static func thud() { rigid.impactOccurred(); rigid.prepare() }
+    static func success() { notification.notificationOccurred(.success); notification.prepare() }
 }
