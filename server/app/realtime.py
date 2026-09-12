@@ -9,10 +9,12 @@ Nothing durable lives in Redis: the plan is 29 MB. Live fight state carries a TT
 """
 
 import asyncio
+import contextlib
 import json
 import logging
 
 from fastapi import WebSocket
+from starlette.websockets import WebSocketDisconnect
 
 from app.config import REDIS_URL
 
@@ -51,7 +53,10 @@ class Realtime:
                 await self._redis.set(f"mealee:live:{league_code}", payload, ex=LIVE_FIGHT_TTL_S)
             return
         for socket in list(self._local_sockets.get(league_code, ())):
-            await socket.send_text(payload)
+            try:
+                await socket.send_text(payload)
+            except (WebSocketDisconnect, RuntimeError):
+                self._local_sockets[league_code].discard(socket)
 
     async def live_fight(self, league_code: str) -> dict | None:
         if self._redis is None:
@@ -65,23 +70,33 @@ class Realtime:
         await socket.accept()
         if self._redis is None:
             self._local_sockets.setdefault(league_code, set()).add(socket)
-            await self._hold_open(socket)
-            self._local_sockets[league_code].discard(socket)
+            try:
+                await self._hold_open(socket)
+            finally:
+                self._local_sockets[league_code].discard(socket)
             return
 
+        # _hold_open only ever returns by raising (client closed, or 20 s of silence), so
+        # the teardown must sit in a finally or the pub/sub connection leaks for good.
         pubsub = self._redis.pubsub()
         await pubsub.subscribe(self._channel(league_code))
         forward = asyncio.create_task(self._forward(pubsub, socket))
-        await self._hold_open(socket)
-        forward.cancel()
-        await pubsub.unsubscribe(self._channel(league_code))
-        await pubsub.aclose()
+        try:
+            await self._hold_open(socket)
+        finally:
+            forward.cancel()
+            with contextlib.suppress(asyncio.CancelledError, Exception):
+                await forward
+            await pubsub.aclose()
 
     @staticmethod
     async def _forward(pubsub, socket: WebSocket) -> None:
-        async for item in pubsub.listen():
-            if item["type"] == "message":
-                await socket.send_text(item["data"].decode())
+        try:
+            async for item in pubsub.listen():
+                if item["type"] == "message":
+                    await socket.send_text(item["data"].decode())
+        except (WebSocketDisconnect, RuntimeError) as error:
+            log.info("forward stopped: %r", error)
 
     @staticmethod
     async def _hold_open(socket: WebSocket) -> None:

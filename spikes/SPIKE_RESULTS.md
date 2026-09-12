@@ -42,7 +42,11 @@ Everything marked "not run" is written and ready to run on the team Mac.
 ## Not verifiable here
 
 - Anything SwiftUI, AVFoundation, or Auth0.
-- Redis Cloud and MongoDB Atlas connections (ports blocked by the egress proxy). Code
-  falls back to in-process realtime and skips Atlas with a logged warning when the env
-  vars are unset, and the same code paths run with them set.
+- The Redis Cloud and MongoDB Atlas hosts themselves. The container's egress relay does
+  not carry raw TCP to database ports (its README lists "raw-TCP databases" as
+  unsupported), so both must be checked from a laptop or from Railway. The Redis *code*
+  is verified: `realtime.py` was run against a real local `redis-server`, across two
+  uvicorn workers, through a 25 s idle gap, and through 100 opened-and-closed sockets.
+  That run found and fixed a connection leak on socket close (`tests/test_realtime.py`).
+  Atlas code paths run with the env var unset (logged skip) and are not verified live.
 - The IFM vision fallback (host blocked). It is off unless `IFM_API_KEY` is set.

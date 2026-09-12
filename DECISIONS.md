@@ -48,3 +48,8 @@ One line per non-obvious choice: what was chosen over what, and why.
   rounds half to even and Swift rounds half away from zero.
 - Empty error handling on `/meals` narrowed to unreadable images: a missing dependency or a
   bug in the CV path surfaces as a 500 in the log rather than a "bad photo" hint to the player.
+- try/finally and a narrow except inside `realtime.py` despite the "catch only at route
+  boundaries" rule: a WebSocket hold-open loop only ever exits by exception, so the
+  teardown that releases the Redis subscription has to live in a finally. Without it every
+  closed socket leaked one pooled connection and the worker died at 100. Verified against a
+  real local Redis; `tests/test_realtime.py` pins it.
