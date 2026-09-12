@@ -25,6 +25,7 @@ from app import game, identity, nightly, portions
 from app.config import ARENA_HTML_PATH, UPLOAD_DIR
 from app.db import (CatalogFood, Fight, IntakeEvent, League, Meal, MealItem, Player,
                     get_session, init_db, request_session)
+from app import nutrition_estimate
 from app.foods import class_labels, food_classes, warn_if_no_usda
 from app.realtime import realtime
 
@@ -101,9 +102,18 @@ async def search_foods(q: str, session: Session = Depends(request_session)):
         if local_results:
             log.warning("USDA food search failed; returning local matches: %s", error)
             return {"items": [result.as_dict() for result in local_results]}
+        estimated = await nutrition_estimate.estimate(query)
+        if estimated:
+            log.info("serving a model-consensus estimate for %r", query)
+            return {"items": [{
+                "fdc_id": -abs(hash(query)) % 1_000_000,
+                "label": query,
+                "source": "Estimated (model consensus)",
+                **estimated,
+            }]}
         raise HTTPException(status_code=503, detail={
             "error": "no match for that food",
-            "hint": "It is not in the local catalog and the USDA lookup did not answer. Try again, or a simpler word.",
+            "hint": "It is not in the local catalog, USDA did not answer, and the estimate could not be agreed. Try a simpler word.",
         })
 
     for result in usda_results:

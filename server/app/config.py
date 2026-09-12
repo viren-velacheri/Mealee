@@ -29,6 +29,20 @@ AUTH0_CLIENT_ID = os.environ.get("AUTH0_CLIENT_ID", "")
 IFM_API_KEY = os.environ.get("IFM_API_KEY", "")
 IFM_BASE_URL = os.environ.get("IFM_BASE_URL", "https://api.ifm.ai/v1")
 IFM_MODEL = os.environ.get("IFM_MODEL", "IFM/K2-Horizon-375B-A23B")
+# api.ifm.ai rejects a multimodal messages.content array with
+# "Invalid value for 'messages.content'", for every shape tried, so the vision fallback
+# cannot run against it. Off unless someone points IFM_BASE_URL at an endpoint that
+# accepts images; the same key is still used for the text consensus below.
+IFM_VISION_ENABLED = os.environ.get("IFM_VISION_ENABLED", "").lower() in ("1", "true", "yes")
+# Text models, used only to estimate a food the catalog and USDA both failed to supply.
+# K2-Think-v2 is a reasoning model: it spends its budget in message.reasoning and
+# returns empty content, so the non-reasoning Horizon model answers here too.
+IFM_TEXT_MODEL = os.environ.get("IFM_TEXT_MODEL", "IFM/K2-Horizon-375B-A23B")
+GROK_API_KEY = os.environ.get("GROK_API_KEY", "")
+GROK_BASE_URL = os.environ.get("GROK_BASE_URL", "https://api.x.ai/v1")
+GROK_MODEL = os.environ.get("GROK_MODEL", "grok-4.6")  # there is no plain "grok-4"
+# Both models reason before answering; 8s was cutting the read off mid-body.
+NUTRITION_ESTIMATE_TIMEOUT_S = float(os.environ.get("NUTRITION_ESTIMATE_TIMEOUT_S", "30"))
 VISION_TIMEOUT_S = float(os.environ.get("VISION_TIMEOUT_S", "1.5"))
 
 YOLO_WEIGHTS = os.environ.get("YOLO_WEIGHTS", "yolov8s-seg.pt")

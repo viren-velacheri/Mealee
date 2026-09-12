@@ -125,3 +125,12 @@ One line per non-obvious choice: what was chosen over what, and why.
 - Palette.sage and Palette.slate stay as fills and never carry text. Measured against
   the glass card they sit at 2.14:1 and 2.98:1, well under AA; Palette.muted, ink at
   62%, reads as the same family at about 4.9:1.
+- Unknown foods fall back to a two-model consensus, not a single model. IFM K2-Horizon
+  and Grok 4.6 are asked the same question independently; calories and protein must
+  agree or the food is dropped, and a marginal nutrient that disagrees resolves against
+  the player. Results are labelled "Estimated (model consensus)" so they are never
+  confused with USDA data, and this runs only on manual search, never on the photo path.
+- The IFM vision fallback is off behind IFM_VISION_ENABLED. api.ifm.ai rejects a
+  multimodal messages.content array outright, for every shape tried, so it could never
+  have worked; leaving it keyed only on the API key would have put a guaranteed 400 on
+  the four second photo path.

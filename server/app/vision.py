@@ -11,13 +11,14 @@ import logging
 
 import httpx
 
-from app.config import IFM_API_KEY, IFM_BASE_URL, IFM_MODEL, VISION_TIMEOUT_S
+from app.config import (IFM_API_KEY, IFM_BASE_URL, IFM_MODEL, IFM_VISION_ENABLED,
+                        VISION_TIMEOUT_S)
 
 log = logging.getLogger("mealee.vision")
 
 
 def enabled() -> bool:
-    return bool(IFM_API_KEY)
+    return bool(IFM_API_KEY) and IFM_VISION_ENABLED
 
 
 def label_crop(jpeg_bytes: bytes, class_labels: list[str]) -> str | None:
