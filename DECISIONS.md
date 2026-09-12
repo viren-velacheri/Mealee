@@ -75,3 +75,15 @@ One line per non-obvious choice: what was chosen over what, and why.
   reports connected and fails on first use, which lost the first publish after every
   restart. One retry fixes that at no cost; a backoff would add latency to the photo path
   during a real outage, when publish is best effort anyway.
+- Ink `#1E2A22` added to the five-swatch palette: all five are light, and readable text
+  needs one deep tone. It is sage taken down to 15% lightness, so it still belongs.
+- SwiftUI Metal shaders (`colorEffect`, `distortionEffect`) over Core Animation tricks for
+  the aurora, liquid meters, the photo dissolve and the ripple transition: they are
+  first party, iOS 17, and cost one GPU pass each; no dependency, no UIKit bridging.
+- The photo is eaten by a dissolve shader instead of a particle system: it delivers the
+  "bite" moment the spec wants in one draw call and stays fluid on the oldest demo phone.
+- Reasons hidden behind "Why" on Home: the screen is calmer and the numbers land first;
+  the reasons stream in on demand, which makes them feel earned rather than dumped.
+- Fight starts by swiping the chosen rival up into the ring, with a button as the fallback:
+  the gesture is the delight, the button is the guarantee.
+- Rounded SF for anything that carries weight, plain SF for body: one family, two voices.

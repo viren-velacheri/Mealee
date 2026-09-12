@@ -8,53 +8,66 @@ struct JoinView: View {
     @State private var emoji = "🍗"
     @State private var newLeagueName = ""
     @State private var isBusy = false
+    @State private var startingOne = false
 
     private let emojiChoices = ["🍗", "🥦", "🍩", "🍕", "🍣", "🥑", "🌶️", "🧀", "🍜", "🍎", "🥯", "🍪"]
 
     var body: some View {
-        NavigationStack {
-            Form {
-                Section("Your fighter") {
-                    TextField("Display name", text: $name).textInputAutocapitalization(.words)
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 10) {
-                            ForEach(emojiChoices, id: \.self) { choice in
-                                Text(choice).font(.system(size: 34))
-                                    .padding(6)
-                                    .background(choice == emoji ? Color.orange.opacity(0.35) : .clear, in: Circle())
-                                    .onTapGesture { emoji = choice }
+        ZStack {
+            AuroraBackground()
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 16) {
+                    Text("Who's fighting?").font(TypeScale.display).foregroundStyle(Palette.ink).padding(.top, 30)
+                    VStack(alignment: .leading, spacing: 14) {
+                        TextField("Display name", text: $name).font(TypeScale.title).textInputAutocapitalization(.words)
+                            .foregroundStyle(Palette.ink)
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(emojiChoices, id: \.self) { choice in
+                                    Text(choice).font(.system(size: 34)).padding(8)
+                                        .background(choice == emoji ? Palette.leaf.opacity(0.5) : .clear, in: Circle())
+                                        .scaleEffect(choice == emoji ? 1.15 : 1)
+                                        .onTapGesture { Haptics.tap(); withAnimation(Motion.bounce) { emoji = choice } }
+                                }
                             }
                         }
                     }
+                    .glassCard()
+                    VStack(spacing: 12) {
+                        TextField("4-letter code", text: $code)
+                            .font(.system(size: 40, weight: .bold, design: .monospaced)).multilineTextAlignment(.center)
+                            .textInputAutocapitalization(.characters).autocorrectionDisabled().foregroundStyle(Palette.ink)
+                        Button { Task { await join(code) } } label: { Text("Join league").primaryPill() }
+                            .disabled(code.count != 4 || name.isEmpty || isBusy)
+                    }
+                    .glassCard()
+                    Button { Haptics.tap(); withAnimation(Motion.bounce) { startingOne.toggle() } } label: {
+                        Text(startingOne ? "Never mind" : "Or start a new league").font(TypeScale.label).foregroundStyle(Palette.sage)
+                    }
+                    if startingOne {
+                        VStack(spacing: 12) {
+                            TextField("League name", text: $newLeagueName).font(TypeScale.title).foregroundStyle(Palette.ink)
+                            Button { Task { await createAndJoin() } } label: { Text("Create and join").primaryPill(filled: false) }
+                                .disabled(newLeagueName.isEmpty || name.isEmpty || isBusy)
+                        }
+                        .glassCard().transition(.liquid)
+                    }
+                    if let message = appState.errorMessage {
+                        Text(message).font(TypeScale.caption).foregroundStyle(Palette.slate).multilineTextAlignment(.center)
+                    }
+                    if appState.api.isMock {
+                        Text("Offline mode: any code joins the DEMO league.").font(TypeScale.caption).foregroundStyle(Palette.slate)
+                    }
+                    if APIConfig.auth0Enabled {
+                        Button("Log out") { auth.logout() }.font(TypeScale.caption).foregroundStyle(Palette.slate)
+                    }
                 }
-                Section("Join a league") {
-                    TextField("4-letter code", text: $code)
-                        .textInputAutocapitalization(.characters)
-                        .autocorrectionDisabled()
-                        .font(.system(.title2, design: .monospaced))
-                    Button("Join") { Task { await join(code) } }
-                        .disabled(code.count != 4 || name.isEmpty || isBusy)
-                }
-                Section("Or start one") {
-                    TextField("League name", text: $newLeagueName)
-                    Button("Create and join") { Task { await createAndJoin() } }
-                        .disabled(newLeagueName.isEmpty || name.isEmpty || isBusy)
-                }
-                if let message = appState.errorMessage {
-                    Section { Text(message).foregroundStyle(.red) }
-                }
-                if appState.api.isMock {
-                    Section { Text("Offline mode: running on bundled fixtures. Any code joins the DEMO league.").font(.footnote) }
-                }
+                .buttonStyle(Pressable())
+                .padding(Layout.gutter)
             }
-            .navigationTitle("Mealee")
-            .toolbar {
-                if APIConfig.auth0Enabled {
-                    Button("Log out") { auth.logout() }
-                }
-            }
-            .onAppear { if name.isEmpty { name = auth.user?.nickname ?? auth.user?.name ?? "" } }
+            .overlay { if isBusy { ProgressView().tint(Palette.leaf).scaleEffect(1.4) } }
         }
+        .onAppear { if name.isEmpty { name = auth.user?.nickname ?? auth.user?.name ?? "" } }
     }
 
     private func join(_ leagueCode: String) async {

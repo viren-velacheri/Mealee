@@ -40,3 +40,10 @@ fixtures and fights are simulated on the phone. This is the fallback if wifi die
 `MealeeTests/BattleSimTests.swift` pins the Swift fight simulation to the Python one.
 Run with Cmd+U. If it fails after a change to `server/app/battle.py`, regenerate the
 fixture with `python3 spikes/spike_battle.py`.
+
+## Design
+
+`DESIGN.md` at the repo root is the system: palette, type, motion, shaders, and what each
+screen shows. `Mealee/Design/Shaders.metal` compiles with Xcode's default Metal toolchain;
+nothing to install. If a shader misbehaves on a device, every use is a single modifier
+(`.colorEffect` or `.distortionEffect`) that can be commented out without touching layout.

@@ -4,32 +4,29 @@ struct LoginView: View {
     @Environment(Auth0Session.self) private var auth
 
     var body: some View {
-        VStack(spacing: 24) {
-            Spacer()
-            Text("🍽️").font(.system(size: 96))
-            Text("Mealee").font(.system(size: 44, weight: .black, design: .rounded))
-            Text("Your meals become your fighter.").foregroundStyle(.secondary)
-            Spacer()
-            if auth.isLoading {
-                ProgressView("Checking session")
-            } else {
-                Button { auth.login(screenHint: "signup") } label: {
-                    Text("Sign Up").frame(maxWidth: .infinity)
+        ZStack {
+            AuroraBackground()
+            VStack(spacing: 22) {
+                Spacer()
+                FighterSpriteView(stats: .empty, emoji: "🍽️")
+                Text("Mealee").font(TypeScale.display).foregroundStyle(Palette.ink)
+                Text("Your meals become your fighter.").font(TypeScale.body).foregroundStyle(Palette.slate)
+                Spacer()
+                VStack(spacing: 12) {
+                    if auth.isLoading {
+                        ProgressView().tint(Palette.leaf)
+                    } else {
+                        Button { Haptics.tap(); auth.login(screenHint: "signup") } label: { Text("Sign up").primaryPill() }
+                        Button { Haptics.tap(); auth.login() } label: { Text("Log in").primaryPill(filled: false) }
+                    }
+                    if let message = auth.errorMessage {
+                        Text(message).font(TypeScale.caption).foregroundStyle(Palette.slate).multilineTextAlignment(.center)
+                    }
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-                Button { auth.login() } label: {
-                    Text("Log In").frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
+                .buttonStyle(Pressable())
+                .glassCard()
             }
-            if let message = auth.errorMessage {
-                Text(message).font(.footnote).foregroundStyle(.red).multilineTextAlignment(.center)
-            }
-            Text("Sign in with Auth0. Set AUTH0_ENABLED = NO in Config.xcconfig to skip this.")
-                .font(.caption2).foregroundStyle(.tertiary).multilineTextAlignment(.center)
+            .padding(Layout.gutter)
         }
-        .padding(28)
     }
 }

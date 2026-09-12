@@ -9,6 +9,9 @@ final class FightViewModel {
     var aHp = 0
     var bHp = 0
     var callout = ""
+    var lastDamage: Int?
+    var aHits = 0
+    var bHits = 0
     var isPlaying = false
     var isFinished = false
     var replayMatches: Bool?
@@ -35,6 +38,9 @@ final class FightViewModel {
         aHp = fight.a.hpMax
         bHp = fight.b.hpMax
         callout = "\(fight.a.name) vs \(fight.b.name)"
+        lastDamage = nil
+        aHits = 0
+        bHits = 0
         isFinished = false
         replayMatches = nil
         play(fight)
@@ -50,6 +56,10 @@ final class FightViewModel {
                 shownTurns.append(turn)
                 aHp = turn.aHp
                 bHp = turn.bHp
+                lastDamage = turn.action == "hit" ? turn.damage : nil
+                if turn.action == "hit" {
+                    if turn.actor == "a" { bHits += 1 } else { aHits += 1 }
+                }
                 switch turn.action {
                 case "hit": callout = "\(turn.damage) damage"
                 case "miss": callout = "miss"

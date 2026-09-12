@@ -3,128 +3,83 @@ import SwiftUI
 struct FightView: View {
     @Environment(AppState.self) private var appState
     @State private var viewModel = FightViewModel()
+    @State private var selectedId: String?
+    @State private var lift: CGFloat = 0
 
     var body: some View {
-        Group {
+        ZStack {
+            AuroraBackground()
             if viewModel.fight == nil {
-                opponentPicker
+                picker.transition(.liquid)
             } else {
-                playback
+                FightPlaybackView(viewModel: viewModel).transition(.liquid)
             }
         }
-        .navigationTitle("Fight")
-        .background(Color(white: 0.04).ignoresSafeArea())
+        .animation(Motion.settle, value: viewModel.fight == nil)
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .navigationTitle("")
     }
 
-    private var opponentPicker: some View {
-        List {
-            Section {
-                Button {
-                    guard let opponent = appState.opponents.randomElement() else { return }
-                    Task { await start(against: opponent.playerId) }
-                } label: {
-                    Label("Quick match", systemImage: "bolt.fill").font(.headline)
-                }
-                .disabled(appState.opponents.isEmpty || viewModel.isStarting)
-            }
-            Section("Pick an opponent") {
-                ForEach(appState.opponents) { opponent in
-                    Button { Task { await start(against: opponent.playerId) } } label: {
-                        HStack {
-                            Text(opponent.emoji).font(.title)
-                            VStack(alignment: .leading) {
-                                Text(opponent.name).font(.headline)
-                                if let fighter = opponent.fighter {
-                                    Text("ATK \(Int(fighter.attack + 0.5)) · DEF \(Int(fighter.defense + 0.5)) · HP \(fighter.hpMax)")
-                                        .font(.caption).foregroundStyle(.secondary)
-                                }
+    private var picker: some View {
+        VStack(spacing: 18) {
+            Text("Choose a rival").font(TypeScale.display).foregroundStyle(Palette.ink).padding(.top, 8)
+            Text("Tap a card, then swipe it up into the ring").font(TypeScale.caption).foregroundStyle(Palette.slate)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 14) {
+                    ForEach(appState.opponents) { opponent in
+                        OpponentCard(player: opponent, selected: opponent.playerId == selectedId)
+                            .offset(y: opponent.playerId == selectedId ? lift : 0)
+                            .onTapGesture {
+                                Haptics.tap()
+                                withAnimation(Motion.bounce) { selectedId = opponent.playerId }
                             }
-                        }
+                            .gesture(swipeUp(for: opponent))
                     }
                 }
-                if appState.opponents.isEmpty { Text("Nobody else in the league yet").foregroundStyle(.secondary) }
+                .padding(.horizontal, Layout.gutter).padding(.vertical, 30)
             }
-            if let message = viewModel.errorMessage { Section { Text(message).foregroundStyle(.red) } }
+            .frame(height: 260)
+            if appState.opponents.isEmpty {
+                Text("Nobody else in the league yet").font(TypeScale.body).foregroundStyle(Palette.slate)
+            }
+            Spacer()
+            if let message = viewModel.errorMessage {
+                Text(message).font(TypeScale.caption).foregroundStyle(Palette.slate)
+            }
+            Button {
+                guard let opponent = selectedId ?? appState.opponents.randomElement()?.playerId else { return }
+                Task { await start(against: opponent) }
+            } label: {
+                Label(selectedId == nil ? "Quick match" : "Fight", systemImage: "bolt.fill").primaryPill()
+            }
+            .buttonStyle(Pressable())
+            .disabled(appState.opponents.isEmpty || viewModel.isStarting)
+            .padding(.horizontal, Layout.gutter).padding(.bottom, 12)
         }
-        .overlay { if viewModel.isStarting { ProgressView("Matching") } }
+        .overlay { if viewModel.isStarting { ProgressView().tint(Palette.leaf).scaleEffect(1.4) } }
         .refreshable { await appState.refresh() }
     }
 
-    private var playback: some View {
-        VStack(spacing: 14) {
-            if let fight = viewModel.fight {
-                HStack(alignment: .top, spacing: 12) {
-                    FighterCard(combatant: fight.a, hp: viewModel.aHp, tint: .orange)
-                    FighterCard(combatant: fight.b, hp: viewModel.bHp, tint: .cyan)
-                }
-                Text(viewModel.callout).font(.title2.bold()).multilineTextAlignment(.center).frame(minHeight: 60)
-                    .contentTransition(.numericText())
-                ScrollViewReader { proxy in
-                    List(viewModel.shownTurns) { turn in
-                        HStack(alignment: .top) {
-                            Text("t\(turn.turn)").font(.caption.monospacedDigit()).foregroundStyle(.secondary).frame(width: 30)
-                            Text(turn.note).font(.callout)
-                        }
-                        .listRowBackground(turn.actor == "a" ? Color.orange.opacity(0.12) : Color.cyan.opacity(0.12))
-                        .id(turn.id)
-                    }
-                    .scrollContentBackground(.hidden)
-                    .onChange(of: viewModel.shownTurns.count) { _, _ in
-                        if let last = viewModel.shownTurns.last { withAnimation { proxy.scrollTo(last.id) } }
-                    }
-                }
-                HStack {
-                    if viewModel.isPlaying {
-                        Button("Skip") { viewModel.skip() }
-                    } else {
-                        Button("Fight again") { viewModel.fight = nil }
-                        Button("Verify replay") { viewModel.verifyReplay() }
-                        if let matches = viewModel.replayMatches {
-                            Text(matches ? "✓ replayed on device" : "✗ replay differs").font(.caption)
-                        }
-                    }
-                }
-                .buttonStyle(.bordered)
+    private func swipeUp(for opponent: LeaguePlayer) -> some Gesture {
+        DragGesture()
+            .onChanged { value in
+                guard opponent.playerId == selectedId, value.translation.height < 0 else { return }
+                lift = 80 * tanh(value.translation.height / 80)
             }
-        }
-        .padding()
-        .onChange(of: appState.lastFight) { _, fight in
-            if let fight, fight.fightId != viewModel.fight?.fightId, viewModel.isFinished { viewModel.load(fight) }
-        }
+            .onEnded { value in
+                guard opponent.playerId == selectedId else { return }
+                if value.translation.height < -90 {
+                    Haptics.success()
+                    withAnimation(Motion.snappy) { lift = -160 }
+                    Task { await start(against: opponent.playerId); lift = 0 }
+                } else {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.45)) { lift = 0 }
+                }
+            }
     }
 
     private func start(against opponentId: String) async {
         guard let me = appState.playerId else { return }
         await viewModel.start(me: me, opponent: opponentId, api: appState.api)
-    }
-}
-
-struct FighterCard: View {
-    let combatant: Combatant
-    let hp: Int
-    let tint: Color
-
-    var body: some View {
-        VStack(spacing: 6) {
-            Text(combatant.emoji).font(.system(size: 44))
-            Text(combatant.name).font(.headline).foregroundStyle(tint).lineLimit(1)
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    Capsule().fill(.white.opacity(0.1))
-                    Capsule().fill(hp * 10 < combatant.hpMax * 3 ? Color.red : Color.green)
-                        .frame(width: geo.size.width * CGFloat(max(0, hp)) / CGFloat(combatant.hpMax))
-                }
-            }
-            .frame(height: 12)
-            .animation(.easeOut(duration: 0.35), value: hp)
-            Text("\(hp) / \(combatant.hpMax)").font(.caption.monospacedDigit())
-            Text("ATK \(combatant.attack) DEF \(combatant.defense) SPD \(combatant.speed) FOC \(combatant.focus)")
-                .font(.caption2).foregroundStyle(.secondary)
-            if combatant.firstStrike { Text("⚡ first strike").font(.caption2) }
-            if let crash = combatant.crashTurn { Text("🍬 crash turn \(crash)").font(.caption2) }
-        }
-        .padding(10)
-        .frame(maxWidth: .infinity)
-        .background(Color(white: 0.1), in: RoundedRectangle(cornerRadius: 14))
     }
 }

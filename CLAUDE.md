@@ -65,6 +65,11 @@ Three stores, each with one job. Do not blur them.
   the polling fallback reads fights from SQLite. Publishing is best effort after the
   SQLite commit, so a Redis outage costs a log line, never a failed request.
 
+## Design
+
+`DESIGN.md` is the visual system: the five-swatch mint palette plus derived ink, glass
+cards, spring motion, four Metal shaders, and the per-screen flows. New UI follows it.
+
 ## Layout
 
 ```

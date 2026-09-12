@@ -70,3 +70,20 @@ open. Commit hashes refer to branch `claude/hopeful-mayer-q59x3p`.
   Redis work. After the merge: 36 Python tests pass; the Swift API layer with
   `confirmMeal`/`discardMeal` compiles on Linux; `BattleSimTests` 4/4. `MockJourneyTests`
   imports UIKit, so it waits for Xcode.
+
+## 2026-09-12, session 5: design pass
+
+- Palette applied everywhere: mist, mint, leaf, sage, slate, plus a derived ink. See
+  `DESIGN.md` for the system, the shader list, and the per-screen flows.
+- New `ios/Mealee/Design/`: `Theme`, `Glass` (glass cards, pressable style, aurora,
+  liquid transition, haptics), `Shaders.metal` (aurora, shimmer, dissolve, ripple),
+  `StatMeter`/`HPBar`, `StreamingText`/`PopNumber`.
+- Every screen restyled: Home (breathing, draggable fighter; reasons stream on demand),
+  Fight (swipe a rival into the ring, liquid HP, shake on hit, damage pops, streaming log,
+  winner burst), Scan (dissolve shader eats the photo), Review (glass rows, grams first,
+  details tucked away, grid picker sheet), Delta, Capture, League, Foodex (flip-in tiles),
+  Join, Login. Your Cancel/Retake/Confirm flow and `fighterBefore` were kept as is.
+- Arena page rebuilt in the palette and verified in Chromium through a fight and a Redis
+  failover: passes, screenshot checked by eye.
+- Not compiled: all SwiftUI and the Metal file (no Xcode here). `FightViewModel` still
+  compiles on Linux after its small additions. Expect the usual first-build pass.

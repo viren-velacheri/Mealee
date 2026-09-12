@@ -5,68 +5,92 @@ struct LeagueView: View {
     @Environment(AppState.self) private var appState
 
     var body: some View {
-        List {
-            if let league = appState.league {
-                Section {
-                    VStack(spacing: 8) {
-                        Text(league.code).font(.system(size: 56, weight: .black, design: .monospaced)).tracking(8)
-                        Text(league.name).foregroundStyle(.secondary)
-                        if let qr = QRCode.image(for: "mealee://join/\(league.code)") {
-                            Image(uiImage: qr).interpolation(.none).resizable().frame(width: 150, height: 150)
-                                .background(.white).clipShape(RoundedRectangle(cornerRadius: 8))
+        ZStack {
+            AuroraBackground()
+            ScrollView(showsIndicators: false) {
+                if let league = appState.league {
+                    VStack(spacing: 16) {
+                        VStack(spacing: 10) {
+                            Text(league.code).font(.system(size: 64, weight: .black, design: .rounded)).tracking(10)
+                                .foregroundStyle(Palette.ink).padding(.leading, 10)
+                            Text(league.name).font(TypeScale.body).foregroundStyle(Palette.slate)
+                            if let qr = QRCode.image(for: "mealee://join/\(league.code)") {
+                                Image(uiImage: qr).interpolation(.none).resizable().frame(width: 140, height: 140)
+                                    .padding(8).background(Palette.mist, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                            }
+                            Text("Type the code or scan to join").font(TypeScale.caption).foregroundStyle(Palette.slate)
                         }
-                        Text("Friends type the code or scan to join").font(.caption).foregroundStyle(.tertiary)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .listRowBackground(Color.clear)
-                }
-                Section("Standings this week") {
-                    ForEach(league.standings) { standing in
-                        HStack {
-                            Text("\(standing.rank)").font(.headline.monospacedDigit()).foregroundStyle(.secondary).frame(width: 24)
-                            Text(standing.emoji).font(.title2)
-                            Text(standing.name).font(standing.playerId == appState.playerId ? .headline : .body)
-                            Spacer()
-                            Text("\(standing.wins) W").font(.headline.monospacedDigit())
-                            Text("\(standing.damage) dmg").font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity)
+                        .glassCard(tint: Palette.leaf)
+                        section("Standings this week") {
+                            ForEach(league.standings) { standing in
+                                StandingRow(standing: standing, mine: standing.playerId == appState.playerId)
+                            }
                         }
-                    }
-                }
-                Section("Tonight at 9pm") {
-                    ForEach(league.tonight) { matchup in
-                        HStack {
-                            Text("\(matchup.a.emoji) \(matchup.a.name)")
-                            Spacer()
-                            Text("vs").foregroundStyle(.tertiary)
-                            Spacer()
-                            Text(matchup.b.map { "\($0.emoji) \($0.name)" } ?? "bye")
+                        section("Tonight at 9pm") {
+                            ForEach(league.tonight) { matchup in
+                                HStack {
+                                    Text("\(matchup.a.emoji) \(matchup.a.name)").font(TypeScale.body).foregroundStyle(Palette.ink)
+                                    Spacer()
+                                    Text("vs").font(TypeScale.label).foregroundStyle(Palette.slate)
+                                    Spacer()
+                                    Text(matchup.b.map { "\($0.emoji) \($0.name)" } ?? "bye").font(TypeScale.body).foregroundStyle(Palette.ink)
+                                }
+                            }
                         }
-                    }
-                }
-                Section("Foodex this week") {
-                    ForEach(league.players) { player in
-                        HStack {
-                            Text("\(player.emoji) \(player.name)")
-                            Spacer()
-                            Text("\(player.discovered) of \(foodClassLabels.count)").monospacedDigit().foregroundStyle(.secondary)
+                        section("Foodex this week") {
+                            ForEach(league.players) { player in
+                                HStack {
+                                    Text("\(player.emoji) \(player.name)").font(TypeScale.body).foregroundStyle(Palette.ink)
+                                    Spacer()
+                                    Text("\(player.discovered) of \(foodClassLabels.count)").font(TypeScale.number).foregroundStyle(Palette.slate)
+                                }
+                            }
                         }
+                        Button { Haptics.tap(); appState.leave() } label: {
+                            Text("Leave league").font(TypeScale.caption).foregroundStyle(Palette.slate)
+                        }
+                        .padding(.top, 8)
                     }
+                    .padding(Layout.gutter)
+                } else {
+                    ProgressView().tint(Palette.leaf).padding(.top, 120)
                 }
-                if let fight = appState.lastFight {
-                    Section("Latest fight") {
-                        Text("\(fight.a.emoji) \(fight.a.name) vs \(fight.b.emoji) \(fight.b.name), won by \(fight.winnerId == fight.a.playerId ? fight.a.name : fight.b.name)")
-                    }
-                }
-            } else {
-                ProgressView()
-            }
-            Section {
-                Button("Leave league", role: .destructive) { appState.leave() }
             }
         }
-        .navigationTitle("League")
+        .toolbarBackground(.hidden, for: .navigationBar)
         .refreshable { await appState.refresh() }
         .task { await appState.refresh() }
+    }
+
+    private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title).font(TypeScale.heading).foregroundStyle(Palette.ink)
+            content()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .glassCard()
+    }
+}
+
+struct StandingRow: View {
+    let standing: Standing
+    let mine: Bool
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Text("\(standing.rank)").font(TypeScale.number).foregroundStyle(Palette.ink)
+                .frame(width: 28, height: 28)
+                .background(standing.rank == 1 ? Palette.leaf : Palette.mint.opacity(0.6), in: Circle())
+            Text(standing.emoji).font(.system(size: 26))
+            Text(standing.name).font(mine ? TypeScale.heading : TypeScale.body).foregroundStyle(Palette.ink)
+            Spacer()
+            VStack(alignment: .trailing, spacing: 0) {
+                Text("\(standing.wins) W").font(TypeScale.number).foregroundStyle(Palette.ink).contentTransition(.numericText())
+                Text("\(standing.damage) dmg").font(TypeScale.caption).foregroundStyle(Palette.slate)
+            }
+        }
+        .padding(.vertical, 4)
     }
 }
 

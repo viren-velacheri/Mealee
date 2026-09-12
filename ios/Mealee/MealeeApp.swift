@@ -10,7 +10,8 @@ struct MealeeApp: App {
             RootView()
                 .environment(appState)
                 .environment(auth)
-                .preferredColorScheme(.dark)
+                .preferredColorScheme(.light)
+                .tint(Palette.leaf)
                 .task { auth.restoreSession() }
         }
     }
@@ -21,20 +22,25 @@ struct RootView: View {
     @Environment(Auth0Session.self) private var auth
 
     var body: some View {
-        if APIConfig.auth0Enabled && auth.user == nil {
-            LoginView()
-        } else if !appState.isJoined {
-            JoinView()
-        } else {
-            TabView {
-                NavigationStack { HomeView() }
-                    .tabItem { Label("Fighter", systemImage: "figure.boxing") }
-                NavigationStack { FightView() }
-                    .tabItem { Label("Fight", systemImage: "bolt.fill") }
-                NavigationStack { LeagueView() }
-                    .tabItem { Label("League", systemImage: "trophy.fill") }
+        ZStack {
+            if APIConfig.auth0Enabled && auth.user == nil {
+                LoginView().transition(.liquid)
+            } else if !appState.isJoined {
+                JoinView().transition(.liquid)
+            } else {
+                TabView {
+                    NavigationStack { HomeView() }
+                        .tabItem { Label("Fighter", systemImage: "figure.boxing") }
+                    NavigationStack { FightView() }
+                        .tabItem { Label("Fight", systemImage: "bolt.fill") }
+                    NavigationStack { LeagueView() }
+                        .tabItem { Label("League", systemImage: "trophy.fill") }
+                }
+                .toolbarBackground(.ultraThinMaterial, for: .tabBar)
+                .transition(.liquid)
             }
-            .tint(.orange)
         }
+        .animation(Motion.settle, value: appState.isJoined)
+        .animation(Motion.settle, value: auth.user == nil)
     }
 }
